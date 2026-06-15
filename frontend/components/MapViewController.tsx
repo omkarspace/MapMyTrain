@@ -32,7 +32,7 @@ export default function MapViewController() {
   }, [positions, onTrainMarkerClick]);
 
   const handleCloseDrawer = useCallback(() => {
-    setDrawerOpen(false);
+    setSelectedTrain(null);
   }, []);
 
   return (
