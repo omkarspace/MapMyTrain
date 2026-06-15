@@ -2,12 +2,11 @@
 
 import { useEffect } from "react";
 import { TILE_SERVER_URL } from "@/lib/constants";
+import { useMap } from "./MapContext";
 
-interface TrackLayerProps {
-  map: maplibregl.Map | null;
-}
+export default function TrackLayer() {
+  const { map } = useMap();
 
-export default function TrackLayer({ map }: TrackLayerProps) {
   useEffect(() => {
     if (!map) return;
 

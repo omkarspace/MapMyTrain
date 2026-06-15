@@ -4,15 +4,17 @@ import { useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MAP_CENTER, MAP_ZOOM, DARK_MAP_STYLE } from "@/lib/constants";
+import { useMap } from "./MapContext";
 
 export default function MapCanvas() {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<maplibregl.Map | null>(null);
+  const { setMap } = useMap();
+  const mapRef = useRef<maplibregl.Map | null>(null);
 
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+    if (!mapContainer.current || mapRef.current) return;
 
-    map.current = new maplibregl.Map({
+    const map = new maplibregl.Map({
       container: mapContainer.current,
       style: DARK_MAP_STYLE,
       center: MAP_CENTER,
@@ -21,13 +23,16 @@ export default function MapCanvas() {
       bearing: 0,
     });
 
-    map.current.addControl(new maplibregl.NavigationControl(), "top-right");
+    map.addControl(new maplibregl.NavigationControl(), "top-right");
+    mapRef.current = map;
+    setMap(map);
 
     return () => {
-      map.current?.remove();
-      map.current = null;
+      mapRef.current?.remove();
+      mapRef.current = null;
+      setMap(null);
     };
-  }, []);
+  }, [setMap]);
 
   return (
     <div
