@@ -1,0 +1,25 @@
+{
+  "trains": [
+    {
+      "train_id": 12301,
+      "longitude": 77.2090,
+      "latitude": 28.6139,
+      "bearing": 45,
+      "delay": 12
+    },
+    {
+      "train_id": 12951,
+      "longitude": 78.5432,
+      "latitude": 27.1234,
+      "bearing": 180,
+      "delay": 0
+    },
+    {
+      "train_id": 12625,
+      "longitude": 79.8765,
+      "latitude": 26.5432,
+      "bearing": 270,
+      "delay": 35
+    }
+  ]
+}
