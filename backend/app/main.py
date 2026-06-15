@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import db_manager
+from app.routers import trains, stations
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("MapMyTrain")
@@ -36,6 +37,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(trains.router, prefix=settings.API_V1_STR)
+app.include_router(stations.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/health")
