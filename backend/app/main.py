@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import db_manager
 from app.routers import trains, stations
+from app.routers.ws import router as ws_router
+from app.services.broadcaster import broadcaster
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("MapMyTrain")
@@ -16,10 +18,12 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting MapMyTrain backend...")
     await db_manager.initialize()
+    await broadcaster.initialize()
     logger.info("MapMyTrain backend ready.")
     yield
     # Shutdown
     logger.info("Shutting down MapMyTrain backend...")
+    await broadcaster.close()
     await db_manager.close()
     logger.info("MapMyTrain backend stopped.")
 
@@ -40,6 +44,7 @@ app.add_middleware(
 
 app.include_router(trains.router, prefix=settings.API_V1_STR)
 app.include_router(stations.router, prefix=settings.API_V1_STR)
+app.include_router(ws_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/health")
