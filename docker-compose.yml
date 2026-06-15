@@ -50,7 +50,7 @@ services:
 
   # 3. VECTOR TILE ENGINE (Serving Map Tracks & Station Assets)
   tileserver:
-    image: maplibre/tileserver-gl:v4.11.0
+    image: maptiler/tileserver-gl:v4.11.0
     container_name: mmt-tile-server
     volumes:
       - ./config/tileserver:/data
