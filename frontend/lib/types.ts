@@ -4,6 +4,7 @@ export interface Train {
   source_station_code?: string;
   destination_station_code?: string;
   runs_on_days?: string;
+  average_delay?: number;
 }
 
 export interface Station {

@@ -2,15 +2,16 @@
 
 import { useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
+import { useMap } from "@/components/map/MapContext";
 import { TrainPosition } from "@/lib/types";
 
 interface TrainMarkerProps {
-  map: maplibregl.Map | null;
   position: TrainPosition;
   onClick?: () => void;
 }
 
-export default function TrainMarker({ map, position, onClick }: TrainMarkerProps) {
+export default function TrainMarker({ position, onClick }: TrainMarkerProps) {
+  const { map } = useMap();
   const markerRef = useRef<maplibregl.Marker | null>(null);
 
   useEffect(() => {

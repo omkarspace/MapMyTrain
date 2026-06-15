@@ -1,7 +1,7 @@
 import MapCanvas from "@/components/map/MapCanvas";
 import { MapProvider } from "@/components/map/MapContext";
 import TrackLayer from "@/components/map/TrackLayer";
-import StatusBar from "@/components/ui/StatusBar";
+import MapViewController from "@/components/MapViewController";
 import WebSocketProvider from "@/providers/WebSocketProvider";
 
 export default function Home() {
@@ -11,7 +11,7 @@ export default function Home() {
         <MapProvider>
           <MapCanvas />
           <TrackLayer />
-          <StatusBar />
+          <MapViewController />
         </MapProvider>
       </WebSocketProvider>
     </main>
