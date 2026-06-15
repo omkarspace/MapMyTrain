@@ -1,0 +1,24 @@
+{
+  "options": {
+    "paths": {
+      "root": "/data",
+      "fonts": "fonts",
+      "styles": "styles",
+      "mbtiles": "/data"
+    }
+  },
+  "data": {
+    "openmaptiles": {
+      "mbtiles": "openmaptiles.mbtiles"
+    }
+  },
+  "styles": {
+    "bright": {
+      "style": "bright.json",
+      "tilejson": {
+        "type": "overlay",
+        "tiles": ["http://localhost:8080/data/openmaptiles/{z}/{x}/{y}.pbf"]
+      }
+    }
+  }
+}
