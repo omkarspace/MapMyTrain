@@ -1,0 +1,36 @@
+# docker-compose.dev.yml
+version: '3.8'
+
+networks:
+  mapmytrain-mesh:
+    driver: bridge
+
+volumes:
+  postgis_data:
+  redis_data:
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: mmt-postgis-db-dev
+    environment:
+      POSTGRES_USER: mmt_user
+      POSTGRES_PASSWORD: dev_password
+      POSTGRES_DB: mapmytrain_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+    networks:
+      - mapmytrain-mesh
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: mmt-redis-cache-dev
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mapmytrain-mesh

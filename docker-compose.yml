@@ -1,0 +1,68 @@
+# docker-compose.yml
+version: '3.8'
+
+networks:
+  mapmytrain-mesh:
+    driver: bridge
+
+volumes:
+  postgis_data:
+  redis_data:
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: mmt-postgis-db
+    environment:
+      POSTGRES_USER: mmt_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_password}
+      POSTGRES_DB: mapmytrain_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+    networks:
+      - mapmytrain-mesh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mmt_user -d mapmytrain_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: mmt-redis-cache
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mapmytrain-mesh
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mmt-fastapi-backend
+    environment:
+      - DATABASE_URL=postgresql://mmt_user:${DB_PASSWORD:-dev_password}@db:5432/mapmytrain_dev
+      - REDIS_URL=redis://redis:6379/0
+      - DEVELOPMENT_MOCK_MODE=true
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mapmytrain-mesh
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
