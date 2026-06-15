@@ -1,6 +1,4 @@
 # docker-compose.dev.yml
-version: '3.8'
-
 networks:
   mapmytrain-mesh:
     driver: bridge
