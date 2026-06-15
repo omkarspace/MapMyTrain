@@ -6,13 +6,21 @@ import { TrainPosition } from "@/lib/types";
 
 const TRAIN_POSITION_SIZE = 16;
 
+async function loadMockTrains(): Promise<Map<number, TrainPosition>> {
+  const res = await fetch("/data/mock_trains.json");
+  const data = await res.json();
+  const mockPositions = new Map<number, TrainPosition>();
+  data.trains.forEach((t: TrainPosition) => mockPositions.set(t.train_id, t));
+  return mockPositions;
+}
+
 export function useWebSocket() {
   const [positions, setPositions] = useState<Map<number, TrainPosition>>(new Map());
   const ws = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     if (USE_MOCK_TELEMETRY) {
-      loadMockData();
+      loadMockTrains().then(setPositions);
       return;
     }
 
@@ -42,14 +50,6 @@ export function useWebSocket() {
       ws.current?.close();
     };
   }, []);
-
-  const loadMockData = async () => {
-    const res = await fetch("/data/mock_trains.json");
-    const data = await res.json();
-    const mockPositions = new Map<number, TrainPosition>();
-    data.trains.forEach((t: TrainPosition) => mockPositions.set(t.train_id, t));
-    setPositions(mockPositions);
-  };
 
   return { positions };
 }

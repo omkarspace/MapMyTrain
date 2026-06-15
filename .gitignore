@@ -5,3 +5,6 @@ __pycache__/
 .env
 .env.local
 .superpowers/
+
+docs/
+document/
