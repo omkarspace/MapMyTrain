@@ -1,0 +1,17 @@
+name: Downstream Production Mirror Sync
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  trigger-production-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch Sync Event to Private Repository
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PRODUCTION_SYNC_PAT }}
+          repository: your-org/map-my-train-prod
+          event-type: update-submodule
+          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'

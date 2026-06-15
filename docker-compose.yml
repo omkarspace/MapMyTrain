@@ -8,54 +8,75 @@ networks:
 volumes:
   postgis_data:
   redis_data:
+  tile_cache:
 
 services:
+  # 1. SPATIAL DATABASE ENGINE
   db:
     image: postgis/postgis:16-3.4
     container_name: mmt-postgis-db
     environment:
-      POSTGRES_USER: mmt_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_password}
-      POSTGRES_DB: mapmytrain_dev
+      POSTGRES_USER: ${POSTGRES_USER:-mmt_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_spatial_pwd}
+      POSTGRES_DB: ${POSTGRES_DB:-mapmytrain}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgis_data:/var/lib/postgresql/data
     networks:
       - mapmytrain-mesh
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mmt_user -d mapmytrain_dev"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mmt_admin} -d ${POSTGRES_DB:-mapmytrain}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: always
 
+  # 2. CACHING & REAL-TIME PUB/SUB BUFFER
   redis:
     image: redis:7.2-alpine
     container_name: mmt-redis-cache
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_secure_token}
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     networks:
       - mapmytrain-mesh
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secure_token}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
+    restart: always
 
+  # 3. VECTOR TILE ENGINE (Serving Map Tracks & Station Assets)
+  tileserver:
+    image: maplibre/tileserver-gl:v4.11.0
+    container_name: mmt-tile-server
+    volumes:
+      - ./config/tileserver:/data
+      - tile_cache:/var/cache/tileserver-gl
+    ports:
+      - "${TILESERVER_PORT:-8080}:8080"
+    command: -c /data/config.json --public_url http://localhost:8080
+    networks:
+      - mapmytrain-mesh
+    restart: always
+
+  # 4. FASTAPI INGESTION ENGINE & WEBSOCKET BROADCASTER
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: mmt-fastapi-backend
     environment:
-      - DATABASE_URL=postgresql://mmt_user:${DB_PASSWORD:-dev_password}@db:5432/mapmytrain_dev
-      - REDIS_URL=redis://redis:6379/0
-      - DEVELOPMENT_MOCK_MODE=true
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-mmt_admin}:${DB_PASSWORD:-secure_spatial_pwd}@db:5432/${POSTGRES_DB:-mapmytrain}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_secure_token}@redis:6379/0
+      - INGESTION_INTERVAL_SECONDS=${INGESTION_INTERVAL_SECONDS:-120}
+      - DEVELOPMENT_MOCK_MODE=${DEVELOPMENT_MOCK_MODE:-false}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -63,10 +84,14 @@ services:
         condition: service_healthy
     networks:
       - mapmytrain-mesh
-    volumes:
-      - ./backend:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+  # 5. NEXT.JS CLIENT FRAMEWORK (WebGL Viewport Layer)
   frontend:
     build:
       context: ./frontend
@@ -75,13 +100,16 @@ services:
     environment:
       - NEXT_PUBLIC_BACKEND_WS_URL=ws://localhost:8000/api/v1/stream
       - NEXT_PUBLIC_TILE_SERVER_URL=http://localhost:8080
+      - NEXT_PUBLIC_USE_MOCK_TELEMETRY=${NEXT_PUBLIC_USE_MOCK_TELEMETRY:-false}
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
       - backend
     networks:
       - mapmytrain-mesh
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    command: npm run dev
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

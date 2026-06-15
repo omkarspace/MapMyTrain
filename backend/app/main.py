@@ -10,6 +10,7 @@ from app.routers.ws import router as ws_router
 from app.services.broadcaster import broadcaster
 from app.services.cache import cache_service
 from app.ingestion.worker import run_ingestion_loop
+from app.services.cleanup import run_cleanup_loop
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("MapMyTrain")
@@ -28,13 +29,22 @@ async def lifespan(app: FastAPI):
     ingestion_task = asyncio.create_task(run_ingestion_loop())
     logger.info("Ingestion worker started.")
 
+    # Start telemetry cleanup worker
+    cleanup_task = asyncio.create_task(run_cleanup_loop())
+    logger.info("Telemetry cleanup worker started.")
+
     logger.info("MapMyTrain backend ready.")
     yield
     # Shutdown
     logger.info("Shutting down MapMyTrain backend...")
     ingestion_task.cancel()
+    cleanup_task.cancel()
     try:
         await ingestion_task
+    except asyncio.CancelledError:
+        pass
+    try:
+        await cleanup_task
     except asyncio.CancelledError:
         pass
     await cache_service.close()

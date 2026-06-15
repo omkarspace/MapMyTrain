@@ -5,6 +5,7 @@ from app.config import settings
 from app.services.cache import cache_service
 from app.services.broadcaster import broadcaster
 from app.services.rate_limiter import rate_limiter
+from app.services.state_machine import state_machine
 from app.ingestion.scraper import fetch_with_fallback
 
 logger = logging.getLogger("MapMyTrain.Worker")
@@ -99,6 +100,11 @@ async def run_ingestion_loop():
                 # Check rate limiter
                 if not await rate_limiter.acquire(train_number):
                     logger.debug(f"Rate limited for train {train_number}")
+                    continue
+
+                # Skip processing if no viewport is viewing this train
+                if not await state_machine.is_train_viewed(train_number):
+                    logger.debug(f"Train {train_number} not viewed, skipping")
                     continue
 
                 # Process train with error handling
