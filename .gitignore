@@ -4,8 +4,8 @@ __pycache__/
 *.pyc
 .env
 .env.local
-.superpowers/
+/.superpowers/
 
 # Internal planning docs (not for public)
-docs/superpowers/
-document/
+/docs/
+/document/
