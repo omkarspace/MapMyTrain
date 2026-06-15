@@ -1,0 +1,82 @@
+<h2>Implementation Approaches</h2>
+<p class="subtitle">Three ways to build MapMyTrain — pick your starting point</p>
+
+<div class="options">
+  <div class="option" data-choice="monorepo" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Monorepo Full Stack</h3>
+      <p>Single repository with all services. Docker Compose orchestrates everything. Fastest to iterate, simplest to debug.</p>
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-header">Structure</div>
+        <div class="mockup-body" style="font-family: monospace; font-size: 13px; line-height: 1.6;">
+          <div>map-my-train/</div>
+          <div>├── frontend/ <span style="color: #64748b;">(Next.js 14)</span></div>
+          <div>├── backend/ <span style="color: #64748b;">(FastAPI + Celery)</span></div>
+          <div>├── ingestion/ <span style="color: #64748b;">(Scraper workers)</span></div>
+          <div>├── database/ <span style="color: #64748b;">(PostGIS schemas)</span></div>
+          <div>├── docker-compose.yml</div>
+          <div>└── .env.example</div>
+        </div>
+      </div>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>One git repo, one deploy</li><li>Shared types/interfaces</li><li>Easiest local dev setup</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Harder to split later</li><li>Public/private split needs work</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="dual-repo" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Dual Repository (as designed)</h3>
+      <p>Follow the manifesto exactly. Public core repo + private prod repo with submodule. Production-ready from day one.</p>
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-header">Structure</div>
+        <div class="mockup-body" style="font-family: monospace; font-size: 13px; line-height: 1.6;">
+          <div style="border-left: 2px solid #22c55e; padding-left: 8px; margin-bottom: 8px;">
+            <div>map-my-train-core/ <span style="color: #22c55e;">(public)</span></div>
+            <div>├── frontend/</div>
+            <div>├── base-backend/</div>
+            <div>└── database/</div>
+          </div>
+          <div style="border-left: 2px solid #ef4444; padding-left: 8px;">
+            <div>map-my-train-prod/ <span style="color: #ef4444;">(private)</span></div>
+            <div>├── core/ <span style="color: #64748b;">← submodule</span></div>
+            <div>├── premium/</div>
+            <div>└── .env.production</div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Matches architecture docs</li><li>Clean IP separation</li><li>Community can contribute safely</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>More complex setup</li><li>Submodule sync overhead</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="phased" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Phased Monorepo → Split</h3>
+      <p>Start monorepo for speed, extract to dual-repo once core is stable. Best of both worlds with migration cost.</p>
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-header">Phases</div>
+        <div class="mockup-body" style="font-family: monospace; font-size: 13px; line-height: 1.6;">
+          <div style="color: #3b82f6;">Phase 1: Monorepo (weeks 1-4)</div>
+          <div>└── Build everything in one repo</div>
+          <div style="color: #eab308; margin-top: 4px;">Phase 2: Extract (weeks 5-6)</div>
+          <div>└── Split public core, setup submodule</div>
+          <div style="color: #22c55e; margin-top: 4px;">Phase 3: Production (week 7+)</div>
+          <div>└── Deploy with full dual-repo setup</div>
+        </div>
+      </div>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Fastest initial development</li><li>Validate architecture first</li><li>Split when you need to</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Migration work later</li><li>Temp IP overlap risk</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top: 16px; color: #94a3b8; font-size: 14px;">Which approach feels right? Click to select, or tell me in the terminal.</p>

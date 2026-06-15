@@ -1,0 +1,106 @@
+<h2>Backend Structure</h2>
+<p class="subtitle">FastAPI with WebSocket streaming + ingestion worker</p>
+
+<div class="mockup">
+  <div class="mockup-header">backend/ Directory Layout</div>
+  <div class="mockup-body" style="font-family: monospace; font-size: 13px; line-height: 1.6;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+      
+      <div>
+        <div style="color: #22c55e; font-weight: bold; margin-bottom: 8px;">📁 File Structure</div>
+        <div>backend/</div>
+        <div>├── app/</div>
+        <div>│   ├── main.py</div>
+        <div>│   ├── config.py</div>
+        <div>│   ├── dependencies.py</div>
+        <div>│   ├── models/</div>
+        <div>│   │   ├── station.py</div>
+        <div>│   │   ├── track.py</div>
+        <div>│   │   └── train.py</div>
+        <div>│   ├── schemas/</div>
+        <div>│   │   ├── train.py</div>
+        <div>│   │   └── websocket.py</div>
+        <div>│   ├── routers/</div>
+        <div>│   │   ├── trains.py</div>
+        <div>│   │   ├── stations.py</div>
+        <div>│   │   └── ws.py</div>
+        <div>│   ├── services/</div>
+        <div>│   │   ├── interpolation.py</div>
+        <div>│   │   ├── cache.py</div>
+        <div>│   │   └── broadcaster.py</div>
+        <div>│   └── ingestion/</div>
+        <div>│       ├── worker.py</div>
+        <div>│       ├── scraper.py</div>
+        <div>│       └── parser.py</div>
+        <div>├── alembic/</div>
+        <div>├── tests/</div>
+        <div>├── requirements.txt</div>
+        <div>└── Dockerfile</div>
+      </div>
+
+      <div>
+        <div style="color: #eab308; font-weight: bold; margin-bottom: 8px;">⚡ Key Services</div>
+        
+        <div style="margin-bottom: 12px;">
+          <div style="color: #3b82f6;">interpolation.py</div>
+          <div style="color: #94a3b8; font-size: 12px;">LERP math: P_current = P_start + f × (P_end - P_start). PostGIS ST_LineInterpolatePoint for curved tracks.</div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div style="color: #3b82f6;">broadcaster.py</div>
+          <div style="color: #94a3b8; font-size: 12px;">Redis Pub/Sub → WebSocket fan-out. Binary packet encoding: [TrainID:4][Lng:4][Lat:4][Bearing:2][Delay:2] = 16 bytes.</div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div style="color: #3b82f6;">scraper.py</div>
+          <div style="color: #94a3b8; font-size: 12px;">NTES API consumer with header rotation, cookie handshake, rate limiting via Redis token bucket.</div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <div style="color: #3b82f6;">cache.py</div>
+          <div style="color: #94a3b8; font-size: 12px;">Redis wrapper: train:{id}:raw (120s TTL), inactive trains (30min TTL), token bucket for rate limits.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 16px;">
+  <div class="mockup">
+    <div class="mockup-header">WebSocket Binary Protocol</div>
+    <div class="mockup-body" style="font-family: monospace; font-size: 13px; line-height: 1.8;">
+      <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+        <div style="background: #1e3a5f; padding: 8px 12px; border-radius: 4px;">
+          <div style="color: #3b82f6; font-size: 11px;">Train ID</div>
+          <div>Int32</div>
+          <div style="color: #64748b; font-size: 11px;">4 bytes</div>
+        </div>
+        <div style="background: #1e3a5f; padding: 8px 12px; border-radius: 4px;">
+          <div style="color: #22c55e; font-size: 11px;">Longitude</div>
+          <div>Float32</div>
+          <div style="color: #64748b; font-size: 11px;">4 bytes</div>
+        </div>
+        <div style="background: #1e3a5f; padding: 8px 12px; border-radius: 4px;">
+          <div style="color: #22c55e; font-size: 11px;">Latitude</div>
+          <div>Float32</div>
+          <div style="color: #64748b; font-size: 11px;">4 bytes</div>
+        </div>
+        <div style="background: #1e3a5f; padding: 8px 12px; border-radius: 4px;">
+          <div style="color: #eab308; font-size: 11px;">Bearing</div>
+          <div>Int16</div>
+          <div style="color: #64748b; font-size: 11px;">2 bytes</div>
+        </div>
+        <div style="background: #1e3a5f; padding: 8px 12px; border-radius: 4px;">
+          <div style="color: #ef4444; font-size: 11px;">Delay</div>
+          <div>Int16</div>
+          <div style="color: #64748b; font-size: 11px;">2 bytes</div>
+        </div>
+        <div style="background: #374151; padding: 8px 12px; border-radius: 4px; display: flex; align-items: center;">
+          <div><strong>Total: 16 bytes</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top: 16px; color: #94a3b8; font-size: 14px;">Does this backend structure look right?</p>
