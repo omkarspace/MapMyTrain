@@ -12,6 +12,8 @@
 
 A next-generation open-core platform that renders Indian Railways train positions on a hardware-accelerated WebGL map canvas using real-time telemetry, LERP interpolation, and binary WebSocket streaming.
 
+**Keywords**: `Indian Railways` `train tracking` `live train status` `real-time train map` `train delay status` `railway map India` `open source train tracker` `NTES API` `PostGIS` `MapLibre` `WebGL` `WebSocket` `FastAPI` `Next.js`
+
 ---
 
 ## Features
@@ -288,6 +290,42 @@ cd backend && python -m pytest tests/ -v
 # Frontend lint
 cd frontend && npm run lint
 ```
+
+---
+
+## FAQ
+
+### What is MapMyTrain?
+
+MapMyTrain is a real-time Indian Railways spatial tracking platform. It renders live train positions on an interactive WebGL map canvas, replacing text-based delay tables with visual geographic context.
+
+### How does MapMyTrain get train data?
+
+The backend ingester scrapes the NTES (National Train Enquiry System) API every 120 seconds using 62 rotating User-Agent strings, cookie handshakes, and 3 fallback endpoints. Raw telemetry is cached in Redis and broadcast to clients via binary WebSocket frames.
+
+### What is the binary WebSocket protocol?
+
+Train positions are streamed as 16-byte binary frames: `[TrainID:4][Lng:4][Lat:4][Bearing:2][Delay:2]`. This is 97% smaller than JSON, enabling 60 FPS rendering on low-end devices.
+
+### How does LERP interpolation work?
+
+Between NTES updates, the frontend uses Linear Interpolation (LERP): `P_current = P_start + f × (P_end - P_start)` where `f = T_elapsed / T_total`. This generates smooth intermediate positions so trains appear to move continuously.
+
+### Is MapMyTrain free to use?
+
+The core engine is open-source under the ODbL license. Premium features (3D terrain, velocity analytics, WhatsApp alerts, offline mode) require a subscription.
+
+### Can I self-host MapMyTrain?
+
+Yes. The entire stack runs via Docker Compose: `docker compose up -d`. You need PostGIS, Redis, a tile server, the FastAPI backend, and the Next.js frontend. See the Quick Start section above.
+
+### What technologies does MapMyTrain use?
+
+**Frontend**: Next.js 16, React 19, MapLibre GL JS, TypeScript, Tailwind CSS. **Backend**: FastAPI, asyncpg, Redis, httpx. **Database**: PostgreSQL 16 + PostGIS 3.4. **Cache**: Redis 7.2 with token bucket rate limiter.
+
+### How do I contribute?
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Quick steps: fork the repo, create a feature branch, run tests (`cd backend && python -m pytest tests/ -v`), run lint (`cd frontend && npm run lint`), and submit a PR.
 
 ---
 

@@ -6,5 +6,6 @@ __pycache__/
 .env.local
 .superpowers/
 
-docs/
+# Internal planning docs (not for public)
+docs/superpowers/
 document/

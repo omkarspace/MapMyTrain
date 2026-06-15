@@ -1,7 +1,30 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "mapmytrain",
+  "version": "1.0.0",
   "private": true,
+  "description": "Real-time Indian Railways spatial tracking platform — see trains moving on actual physical tracks instead of reading static delay tables.",
+  "keywords": [
+    "Indian Railways",
+    "train tracking",
+    "live train status",
+    "real-time map",
+    "MapLibre",
+    "WebGL",
+    "WebSocket",
+    "Next.js",
+    "PostGIS",
+    "open source"
+  ],
+  "author": "MapMyTrain Contributors",
+  "license": "ODbL-1.0",
+  "homepage": "https://mapmytrain.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/omkarspace/MapMyTrain"
+  },
+  "bugs": {
+    "url": "https://github.com/omkarspace/MapMyTrain/issues"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
