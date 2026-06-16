@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useTrainPositions } from "@/providers/WebSocketProvider";
 import { useMapInteractions } from "@/hooks/useMapInteractions";
 import { SearchBar } from "@/components/ui/SearchBar";
@@ -9,15 +9,28 @@ import StatusBar from "@/components/ui/StatusBar";
 import TrainMarker from "@/components/map/TrainMarker";
 import RouteLayer from "@/components/map/RouteLayer";
 import { Train } from "@/lib/types";
-import { MOCK_TRAINS } from "@/lib/constants";
+import { API_BASE_URL } from "@/lib/constants";
 
 export default function MapViewController() {
   const { positions } = useTrainPositions();
   const [selectedTrain, setSelectedTrain] = useState<Train | null>(null);
+  const [trains, setTrains] = useState<Train[]>([]);
+  const trainsLoaded = useRef(false);
+
+  useEffect(() => {
+    if (trainsLoaded.current) return;
+    trainsLoaded.current = true;
+    fetch(`${API_BASE_URL}/api/v1/trains/?limit=200`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.trains) setTrains(data.trains);
+      })
+      .catch(() => {});
+  }, []);
 
   const { handleTrainClick: onTrainMarkerClick } = useMapInteractions({
     onTrainClick: (trainId: number) => {
-      const train = MOCK_TRAINS.find((t) => t.train_number === String(trainId));
+      const train = trains.find((t) => t.train_number === String(trainId));
       if (train) {
         setSelectedTrain(train);
       }
@@ -43,7 +56,7 @@ export default function MapViewController() {
 
   return (
     <>
-      <SearchBar onTrainSelect={handleTrainSelect} trains={MOCK_TRAINS} />
+      <SearchBar onTrainSelect={handleTrainSelect} trains={trains} />
       <RouteLayer
         trainNumber={selectedTrain?.train_number ?? null}
         sourceStation={selectedTrain?.source_station_code}

@@ -14,7 +14,8 @@ async def list_trains(
 ):
     """List all trains with pagination."""
     rows = await conn.fetch(
-        "SELECT train_number, train_name, source_station_code, destination_station_code, runs_on_days "
+        "SELECT train_number, train_name, source_station_code, destination_station_code, "
+        "runs_on_days, train_type, zone, return_train, distance_km "
         "FROM trains ORDER BY train_number LIMIT $1 OFFSET $2",
         limit,
         offset,
@@ -31,7 +32,8 @@ async def search_trains(
 ):
     """Search trains by number or name."""
     rows = await conn.fetch(
-        "SELECT train_number, train_name, source_station_code, destination_station_code, runs_on_days "
+        "SELECT train_number, train_name, source_station_code, destination_station_code, "
+        "runs_on_days, train_type, zone, return_train, distance_km "
         "FROM trains WHERE train_number LIKE $1 OR train_name ILIKE $1 "
         "ORDER BY train_number LIMIT 50",
         f"%{query}%",
@@ -47,7 +49,8 @@ async def get_train(
 ):
     """Get a specific train by number."""
     row = await conn.fetchrow(
-        "SELECT train_number, train_name, source_station_code, destination_station_code, runs_on_days "
+        "SELECT train_number, train_name, source_station_code, destination_station_code, "
+        "runs_on_days, train_type, zone, return_train, distance_km "
         "FROM trains WHERE train_number = $1",
         train_number,
     )

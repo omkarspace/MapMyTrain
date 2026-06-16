@@ -5,6 +5,10 @@ export interface Train {
   destination_station_code?: string;
   runs_on_days?: string;
   average_delay?: number;
+  train_type?: string;
+  zone?: string;
+  return_train?: string;
+  distance_km?: number;
 }
 
 export interface Station {
@@ -27,4 +31,18 @@ export interface TrainPosition {
 export interface TrainListResponse {
   trains: Train[];
   count: number;
+}
+
+export interface ScheduleStop {
+  station_code: string;
+  station_name: string;
+  arrival: string | null;
+  departure: string | null;
+  day: number;
+  stop_sequence: number;
+}
+
+export interface ScheduleResponse {
+  train_number: string;
+  stops: ScheduleStop[];
 }

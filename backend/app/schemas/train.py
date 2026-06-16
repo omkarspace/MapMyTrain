@@ -8,6 +8,10 @@ class TrainResponse(BaseModel):
     source_station_code: Optional[str] = None
     destination_station_code: Optional[str] = None
     runs_on_days: Optional[str] = None
+    train_type: Optional[str] = None
+    zone: Optional[str] = None
+    return_train: Optional[str] = None
+    distance_km: Optional[int] = None
 
 
 class TrainSearchRequest(BaseModel):

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, Clock, MapPin, AlertTriangle, Train } from "lucide-react";
-import { Train as TrainType } from "@/lib/types";
+import { Train as TrainType, ScheduleStop } from "@/lib/types";
 import { InterpolatedPosition } from "@/lib/interpolation";
+import { API_BASE_URL, getTrainTypeColor } from "@/lib/constants";
 
 interface TrainDrawerProps {
   train: TrainType | null;
@@ -11,16 +12,10 @@ interface TrainDrawerProps {
   onClose: () => void;
 }
 
-const MOCK_TIMETABLE = [
-  { station: "NDLS", name: "New Delhi", arrival: "16:25", departure: "16:30", platform: 1 },
-  { station: "CNB", name: "Kanpur Central", arrival: "20:45", departure: "20:50", platform: 3 },
-  { station: "LKO", name: "Lucknow", arrival: "23:15", departure: "23:20", platform: 2 },
-  { station: "GKP", name: "Gorakhpur", arrival: "05:30", departure: "05:40", platform: 4 },
-  { station: "HWH", name: "Howrah", arrival: "14:20", departure: "14:20", platform: 8 },
-];
-
 export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
+  const [schedule, setSchedule] = useState<ScheduleStop[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
 
   useEffect(() => {
     const drawer = drawerRef.current;
@@ -43,6 +38,35 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!train) return;
+    let cancelled = false;
+    const controller = new AbortController();
+    fetch(`${API_BASE_URL}/api/v1/schedules/train/${train.train_number}`, {
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (!res.ok) return { stops: [] };
+        return res.json();
+      })
+      .then((data) => {
+        if (!cancelled) {
+          setSchedule(data.stops || []);
+          setScheduleLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSchedule([]);
+          setScheduleLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [train]);
+
   if (!train) return null;
 
   const statusColor =
@@ -54,6 +78,8 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
     position && position.delay > 0
       ? `${position.delay} min delayed`
       : "On time";
+
+  const typeColor = getTrainTypeColor(train.train_type);
 
   return (
     <div
@@ -71,9 +97,19 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
               <h3 className="text-lg font-semibold text-slate-100">
                 {train.train_name}
               </h3>
-              <p className="text-sm text-slate-400 font-mono">
-                {train.train_number}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-slate-400 font-mono">
+                  {train.train_number}
+                </p>
+                {train.train_type && (
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full font-medium"
+                    style={{ backgroundColor: typeColor + "22", color: typeColor }}
+                  >
+                    {train.train_type}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <button
@@ -93,6 +129,11 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
             )}
             {statusText}
           </span>
+          {train.distance_km && (
+            <span className="text-xs text-slate-500 ml-2">
+              {train.distance_km} km
+            </span>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
@@ -145,24 +186,34 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
               <span>Station</span>
               <span>Arr</span>
               <span>Dep</span>
-              <span>Plat</span>
+              <span>Day</span>
             </div>
-            {MOCK_TIMETABLE.map((stop) => (
-              <div
-                key={stop.station}
-                className="grid grid-cols-4 gap-2 px-3 py-2 text-xs border-t border-slate-700/50"
-              >
-                <div>
-                  <span className="text-slate-100">{stop.station}</span>
-                  <span className="text-slate-500 ml-1 hidden sm:inline">
-                    {stop.name}
-                  </span>
-                </div>
-                <span className="text-slate-300">{stop.arrival}</span>
-                <span className="text-slate-300">{stop.departure}</span>
-                <span className="text-slate-400">{stop.platform}</span>
+            {scheduleLoading ? (
+              <div className="px-3 py-4 text-xs text-slate-500 text-center">
+                Loading schedule...
               </div>
-            ))}
+            ) : schedule.length > 0 ? (
+              schedule.map((stop) => (
+                <div
+                  key={`${stop.station_code}-${stop.stop_sequence}`}
+                  className="grid grid-cols-4 gap-2 px-3 py-2 text-xs border-t border-slate-700/50"
+                >
+                  <div>
+                    <span className="text-slate-100">{stop.station_code}</span>
+                    <span className="text-slate-500 ml-1 hidden sm:inline">
+                      {stop.station_name}
+                    </span>
+                  </div>
+                  <span className="text-slate-300">{stop.arrival || "--"}</span>
+                  <span className="text-slate-300">{stop.departure || "--"}</span>
+                  <span className="text-slate-400">D{stop.day}</span>
+                </div>
+              ))
+            ) : (
+              <div className="px-3 py-4 text-xs text-slate-500 text-center">
+                No schedule data
+              </div>
+            )}
           </div>
         </div>
 

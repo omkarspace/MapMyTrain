@@ -23,26 +23,29 @@ export const BUILDING_COLOR_HIGHLIGHT = "#2d2d44";
 
 export const TRACK_COLOR_GLOW = "#60a5fa";
 
-export const MOCK_TRAINS = [
-  {
-    train_number: "12301",
-    train_name: "Rajdhani Express",
-    source_station_code: "NDLS",
-    destination_station_code: "HWH",
-    average_delay: 12,
-  },
-  {
-    train_number: "12951",
-    train_name: "Mumbai Rajdhani",
-    source_station_code: "NDLS",
-    destination_station_code: "BCT",
-    average_delay: 8,
-  },
-  {
-    train_number: "12259",
-    train_name: "Sealdah Rajdhani",
-    source_station_code: "NDLS",
-    destination_station_code: "SDAH",
-    average_delay: 0,
-  },
-];
+export const TRAIN_TYPE_COLORS: Record<string, string> = {
+  "Rajdhani": "#ef4444",
+  "Shatabdi": "#f59e0b",
+  "Duronto": "#8b5cf6",
+  "Vande Bharat": "#06b6d4",
+  "Garib Rath": "#10b981",
+  "Sampark Kranti": "#3b82f6",
+  "Superfast": "#f97316",
+  "Express": "#6b7280",
+  "Passenger": "#6b7280",
+  "Mail": "#6b7280",
+  "DEMU": "#84cc16",
+  "MEMU": "#22c55e",
+  "Freight": "#78716c",
+  "Special": "#ec4899",
+};
+
+export function getTrainTypeColor(trainType: string | undefined): string {
+  if (!trainType) return "#6b7280";
+  for (const [key, color] of Object.entries(TRAIN_TYPE_COLORS)) {
+    if (trainType.toLowerCase().includes(key.toLowerCase())) {
+      return color;
+    }
+  }
+  return "#6b7280";
+}

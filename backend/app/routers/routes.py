@@ -10,7 +10,24 @@ async def get_train_route(
     train_number: str,
     conn: asyncpg.Connection = Depends(get_db_connection),
 ):
-    """Get GeoJSON route for a train's trip between source and destination stations."""
+    """Get GeoJSON route for a train. Prefers pre-stored geometry from train_routes."""
+    route_row = await conn.fetchrow(
+        "SELECT ST_AsGeoJSON(geom)::jsonb as geometry, distance_km, duration_h, duration_m "
+        "FROM train_routes WHERE train_number = $1",
+        train_number,
+    )
+    if route_row and route_row["geometry"]:
+        return {
+            "type": "Feature",
+            "geometry": route_row["geometry"],
+            "properties": {
+                "train_number": train_number,
+                "distance_km": route_row["distance_km"],
+                "duration_h": route_row["duration_h"],
+                "duration_m": route_row["duration_m"],
+            },
+        }
+
     train = await conn.fetchrow(
         "SELECT source_station_code, destination_station_code "
         "FROM trains WHERE train_number = $1",

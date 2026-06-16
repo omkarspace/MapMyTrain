@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, ArrowRight } from "lucide-react";
 import { Train } from "@/lib/types";
+import { API_BASE_URL, getTrainTypeColor } from "@/lib/constants";
 
 interface SearchBarProps {
   onTrainSelect: (train: Train) => void;
@@ -22,35 +23,51 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
   const [searchMode, setSearchMode] = useState<"train" | "route">("train");
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const searchTrains = useCallback(
-    (q: string) => {
+    async (q: string) => {
       if (!q.trim()) {
         setSuggestions([]);
         return;
       }
-      const lower = q.toLowerCase();
-      let filtered = trains.filter(
-        (t) =>
-          t.train_number.includes(lower) ||
-          t.train_name.toLowerCase().includes(lower)
-      );
 
       if (searchMode === "route" && sourceStation && destStation) {
-        filtered = trains.filter(
+        const filtered = trains.filter(
           (t) =>
             t.source_station_code?.toUpperCase() === sourceStation.toUpperCase() &&
             t.destination_station_code?.toUpperCase() === destStation.toUpperCase()
         );
+        setSuggestions(filtered.slice(0, 10));
+        return;
       }
 
-      setSuggestions(filtered.slice(0, 10));
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/v1/trains/search/${encodeURIComponent(q)}`,
+          { signal: controller.signal }
+        );
+        const data = await res.json();
+        setSuggestions(data.trains?.slice(0, 10) || []);
+      } catch {
+        const lower = q.toLowerCase();
+        const filtered = trains.filter(
+          (t) =>
+            t.train_number.includes(lower) ||
+            t.train_name.toLowerCase().includes(lower)
+        );
+        setSuggestions(filtered.slice(0, 10));
+      }
     },
     [trains, searchMode, sourceStation, destStation]
   );
 
   useEffect(() => {
-    const timer = setTimeout(() => searchTrains(query), 150);
+    const timer = setTimeout(() => searchTrains(query), 200);
     return () => clearTimeout(timer);
   }, [query, searchTrains]);
 
@@ -188,12 +205,26 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-100 truncate">
-                        {train.train_name}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-slate-100 truncate">
+                          {train.train_name}
+                        </p>
+                        {train.train_type && (
+                          <span
+                            className="text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0"
+                            style={{
+                              backgroundColor: getTrainTypeColor(train.train_type) + "22",
+                              color: getTrainTypeColor(train.train_type),
+                            }}
+                          >
+                            {train.train_type}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-slate-400">
                         {train.train_number} • {train.source_station_code} →{" "}
                         {train.destination_station_code}
+                        {train.distance_km ? ` • ${train.distance_km} km` : ""}
                       </p>
                     </div>
                     <div className="text-xs text-slate-500">
