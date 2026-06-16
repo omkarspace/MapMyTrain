@@ -12,7 +12,7 @@ class TrainPosition(BaseModel):
 
 
 # Binary protocol: [TrainID:4][Lng:4][Lat:4][Bearing:2][Delay:2] = 16 bytes
-TRAIN_POSITION_FORMAT = "!ifffi"  # Network byte order, float, float, int, int
+TRAIN_POSITION_FORMAT = "!iffhh"  # Network byte order, int32, float32, float32, int16, int16
 TRAIN_POSITION_SIZE = 16
 
 

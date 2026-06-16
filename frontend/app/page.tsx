@@ -1,7 +1,16 @@
+"use client";
+
+import { TerrainProvider, useTerrain } from "@/providers/TerrainProvider";
 import MapCanvas from "@/components/map/MapCanvas";
 import { MapProvider } from "@/components/map/MapContext";
 import TrackLayer from "@/components/map/TrackLayer";
+import BuildingLayer from "@/components/map/BuildingLayer";
+import StationLayer from "@/components/map/StationLayer";
+import AtmosphereLayer from "@/components/map/AtmosphereLayer";
+import Train3DLayer from "@/components/map/Train3DLayer";
+import TerrainLayer from "@/components/map/TerrainLayer";
 import MapViewController from "@/components/MapViewController";
+import TerrainToggle from "@/components/ui/TerrainToggle";
 import WebSocketProvider from "@/providers/WebSocketProvider";
 
 const jsonLd = {
@@ -37,6 +46,25 @@ const jsonLd = {
     "Indian Railways, train tracking, live train status, real-time train map, Indian train tracker, train delay status, railway map India, train running status, open source train tracker",
 };
 
+function MapLayers() {
+  const { terrainEnabled } = useTerrain();
+
+  return (
+    <>
+      <MapCanvas />
+      <AtmosphereLayer />
+      <BuildingLayer />
+      <TrackLayer />
+      <StationLayer />
+      <Train3DLayer />
+      <TerrainLayer enabled={terrainEnabled} />
+      <MapViewController />
+      <TerrainToggle />
+      <div className="vignette-overlay" />
+    </>
+  );
+}
+
 export default function Home() {
   return (
     <main className="relative w-full h-screen bg-slate-950">
@@ -46,9 +74,9 @@ export default function Home() {
       />
       <WebSocketProvider>
         <MapProvider>
-          <MapCanvas />
-          <TrackLayer />
-          <MapViewController />
+          <TerrainProvider>
+            <MapLayers />
+          </TerrainProvider>
         </MapProvider>
       </WebSocketProvider>
     </main>

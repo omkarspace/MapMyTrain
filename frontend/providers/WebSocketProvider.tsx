@@ -2,10 +2,10 @@
 
 import { createContext, useContext, ReactNode } from "react";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { TrainPosition } from "@/lib/types";
+import { InterpolatedPosition } from "@/lib/interpolation";
 
 interface WebSocketContextType {
-  positions: Map<number, TrainPosition>;
+  positions: Map<number, InterpolatedPosition>;
 }
 
 const WebSocketContext = createContext<WebSocketContextType>({ positions: new Map() });

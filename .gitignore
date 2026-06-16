@@ -9,3 +9,4 @@ __pycache__/
 # Internal planning docs (not for public)
 /docs/
 /document/
+/data_train/

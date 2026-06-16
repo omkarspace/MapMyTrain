@@ -21,13 +21,17 @@ export function OfflineIndicator({ onRetry }: OfflineIndicatorProps) {
       setIsOnline(false);
     };
 
-    setIsOnline(navigator.onLine);
-    setLastSync(new Date());
+    // Delay setting state to avoid synchronous updates in effect body
+    const timer = setTimeout(() => {
+      setIsOnline(navigator.onLine);
+      setLastSync(new Date());
+    }, 0);
 
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };

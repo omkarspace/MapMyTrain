@@ -13,7 +13,8 @@ async def list_stations(
 ):
     """List all stations with pagination."""
     rows = await conn.fetch(
-        "SELECT station_code, station_name, division, zone "
+        "SELECT station_code, station_name, division, zone, "
+        "ST_X(geom) as longitude, ST_Y(geom) as latitude "
         "FROM stations ORDER BY station_code LIMIT $1 OFFSET $2",
         limit,
         offset,
@@ -23,6 +24,36 @@ async def list_stations(
     return {"stations": stations, "count": count}
 
 
+@router.get("/bbox")
+async def get_stations_in_bbox(
+    west: float,
+    south: float,
+    east: float,
+    north: float,
+    limit: int = Query(default=200, le=500),
+    conn: asyncpg.Connection = Depends(get_db_connection),
+):
+    """Get stations within bounding box using PostGIS spatial query."""
+    rows = await conn.fetch(
+        "SELECT station_code, station_name, division, zone, "
+        "ST_X(geom) as longitude, ST_Y(geom) as latitude, "
+        "CASE "
+        "  WHEN station_code IN ('NDLS', 'MAS', 'HWH', 'BCT', 'SBC', 'SC', 'NR', 'ER') THEN 'junction' "
+        "  WHEN station_code IN ('NDLS', 'MAS', 'HWH', 'BCT') THEN 'terminal' "
+        "  ELSE 'regular' "
+        "END as station_type "
+        "FROM stations "
+        "WHERE geom && ST_MakeEnvelope($1, $2, $3, $4, 4326) "
+        "LIMIT $5",
+        west,
+        south,
+        east,
+        north,
+        limit,
+    )
+    return {"stations": [dict(row) for row in rows]}
+
+
 @router.get("/{station_code}")
 async def get_station(
     station_code: str,
@@ -30,7 +61,8 @@ async def get_station(
 ):
     """Get a specific station by code."""
     row = await conn.fetchrow(
-        "SELECT station_code, station_name, division, zone "
+        "SELECT station_code, station_name, division, zone, "
+        "ST_X(geom) as longitude, ST_Y(geom) as latitude "
         "FROM stations WHERE station_code = $1",
         station_code,
     )

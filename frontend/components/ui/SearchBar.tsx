@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Calendar, ArrowRight } from "lucide-react";
+import { Search, ArrowRight } from "lucide-react";
 import { Train } from "@/lib/types";
 
 interface SearchBarProps {

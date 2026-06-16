@@ -3,7 +3,14 @@
 import { useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { MAP_CENTER, MAP_ZOOM, DARK_MAP_STYLE } from "@/lib/constants";
+import {
+  MAP_CENTER,
+  MAP_ZOOM,
+  MAP_PITCH,
+  MAP_BEARING,
+  MAP_MAX_PITCH,
+  DARK_MAP_STYLE,
+} from "@/lib/constants";
 import { useMap } from "./MapContext";
 
 export default function MapCanvas() {
@@ -19,9 +26,10 @@ export default function MapCanvas() {
       style: DARK_MAP_STYLE,
       center: MAP_CENTER,
       zoom: MAP_ZOOM,
-      pitch: 0,
-      bearing: 0,
-    });
+      pitch: MAP_PITCH,
+      bearing: MAP_BEARING,
+      maxPitch: MAP_MAX_PITCH,
+    } as maplibregl.MapOptions & Record<string, unknown>);
 
     map.addControl(new maplibregl.NavigationControl(), "top-right");
     mapRef.current = map;

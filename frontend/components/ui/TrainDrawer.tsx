@@ -2,11 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import { X, Clock, MapPin, AlertTriangle, Train } from "lucide-react";
-import { Train as TrainType, TrainPosition } from "@/lib/types";
+import { Train as TrainType } from "@/lib/types";
+import { InterpolatedPosition } from "@/lib/interpolation";
 
 interface TrainDrawerProps {
   train: TrainType | null;
-  position: TrainPosition | null;
+  position: InterpolatedPosition | null;
   onClose: () => void;
 }
 
@@ -146,7 +147,7 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
               <span>Dep</span>
               <span>Plat</span>
             </div>
-            {MOCK_TIMETABLE.map((stop, idx) => (
+            {MOCK_TIMETABLE.map((stop) => (
               <div
                 key={stop.station}
                 className="grid grid-cols-4 gap-2 px-3 py-2 text-xs border-t border-slate-700/50"

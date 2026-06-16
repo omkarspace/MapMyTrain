@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, BellOff, MessageSquare, Smartphone } from "lucide-react";
+import { Bell, MessageSquare, Smartphone } from "lucide-react";
 
 interface AlertPreferencesProps {
   trainNumber: string;

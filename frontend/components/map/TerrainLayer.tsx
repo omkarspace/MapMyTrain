@@ -29,37 +29,57 @@ export default function TerrainLayer({ enabled = false }: TerrainLayerProps) {
 
     if (enabled) {
       try {
-        // Add terrain source (MapTiler or similar DEM provider)
-        map.addSource("terrain", {
-          type: "raster-dem",
-          url: "https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=YOUR_MAPTILER_KEY",
-          tileSize: 256,
-        });
+        if (!map.getSource("terrain-dem")) {
+          map.addSource("terrain-dem", {
+            type: "raster-dem",
+            url: "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png",
+            tileSize: 256,
+            maxzoom: 14,
+          });
+        }
 
-        // Set terrain exaggeration
-        map.setTerrain({ source: "terrain", exaggeration: 1.5 });
-      } catch (e) {
-        console.warn("Terrain layer not available:", e);
+        map.setTerrain({ source: "terrain-dem", exaggeration: 1.3 });
+
+        if (!map.getLayer("sky-terrain")) {
+          map.addLayer(
+            {
+              id: "sky-terrain",
+              type: "sky" as never,
+              paint: {
+                "sky-type": "atmosphere",
+                "sky-atmosphere-sun": [0.0, 90.0],
+                "sky-atmosphere-sun-intensity": 5,
+              } as never,
+            } as never
+          );
+        }
+      } catch {
+        // Terrain not available
       }
     } else {
       try {
-        // Remove terrain
         map.setTerrain(null);
-        if (map.getSource("terrain")) {
-          map.removeSource("terrain");
+        if (map.getLayer("sky-terrain")) {
+          map.removeLayer("sky-terrain");
         }
-      } catch (e) {
-        console.warn("Error removing terrain:", e);
+        if (map.getSource("terrain-dem")) {
+          map.removeSource("terrain-dem");
+        }
+      } catch {
+        // Ignore cleanup errors
       }
     }
 
     return () => {
       try {
         map.setTerrain(null);
-        if (map.getSource("terrain")) {
-          map.removeSource("terrain");
+        if (map.getLayer("sky-terrain")) {
+          map.removeLayer("sky-terrain");
         }
-      } catch (e) {
+        if (map.getSource("terrain-dem")) {
+          map.removeSource("terrain-dem");
+        }
+      } catch {
         // Ignore cleanup errors
       }
     };

@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.superpowers
+docs
+document
+.env
+.env.local
+__pycache__
+*.pyc

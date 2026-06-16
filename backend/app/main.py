@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import db_manager
 from app.routers import trains, stations
+from app.routers.routes import router as routes_router
 from app.routers.ws import router as ws_router
 from app.services.broadcaster import broadcaster
 from app.services.cache import cache_service
@@ -69,6 +70,7 @@ app.add_middleware(
 
 app.include_router(trains.router, prefix=settings.API_V1_STR)
 app.include_router(stations.router, prefix=settings.API_V1_STR)
+app.include_router(routes_router, prefix=settings.API_V1_STR)
 app.include_router(ws_router, prefix=settings.API_V1_STR)
 
 

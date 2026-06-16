@@ -15,43 +15,44 @@ interface VelocityData {
   delay: number;
 }
 
+const calculateVelocity = (prev: VelocityData[], _current: TrainPosition): number => {
+  if (prev.length === 0) return 0;
+  // Simplified velocity calculation (km/h estimate)
+  // In production, use Haversine formula for accurate distance
+  return Math.round(Math.random() * 60 + 80); // Mock: 80-140 km/h
+};
+
 export function TrainAnalytics({ trainId, currentPosition }: TrainAnalyticsProps) {
   const [history, setHistory] = useState<VelocityData[]>([]);
-  const [currentVelocity, setCurrentVelocity] = useState(0);
+  const [prevTrainId, setPrevTrainId] = useState<number | null>(null);
 
+  // Reset history if train changes (pure render-time state adjustment)
+  if (trainId !== prevTrainId) {
+    setPrevTrainId(trainId);
+    setHistory([]);
+  }
+
+  // Update history in effect with setTimeout to avoid synchronous setState inside effect
   useEffect(() => {
     if (!currentPosition) return;
 
-    const now = Date.now();
-    setHistory((prev) => {
-      const newEntry: VelocityData = {
-        timestamp: now,
-        velocity: calculateVelocity(prev, currentPosition),
-        delay: currentPosition.delay,
-      };
-      return [...prev.slice(-20), newEntry];
-    });
+    const timer = setTimeout(() => {
+      const now = Date.now();
+      setHistory((prev) => {
+        const velocity = calculateVelocity(prev, currentPosition);
+        const newEntry: VelocityData = {
+          timestamp: now,
+          velocity,
+          delay: currentPosition.delay,
+        };
+        return [...prev.slice(-20), newEntry];
+      });
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [currentPosition]);
 
-  useEffect(() => {
-    if (history.length < 2) return;
-
-    const latest = history[history.length - 1];
-    setCurrentVelocity(latest.velocity);
-  }, [history]);
-
-  const calculateVelocity = (prev: VelocityData[], current: TrainPosition): number => {
-    if (prev.length === 0) return 0;
-
-    const last = prev[prev.length - 1];
-    const timeDiff = (Date.now() - last.timestamp) / 1000; // seconds
-
-    if (timeDiff === 0) return 0;
-
-    // Simplified velocity calculation (km/h estimate)
-    // In production, use Haversine formula for accurate distance
-    return Math.round(Math.random() * 60 + 80); // Mock: 80-140 km/h
-  };
+  const currentVelocity = history[history.length - 1]?.velocity || 0;
 
   const getTrend = (): "up" | "down" | "stable" => {
     if (history.length < 2) return "stable";
@@ -67,7 +68,7 @@ export function TrainAnalytics({ trainId, currentPosition }: TrainAnalyticsProps
   const trend = getTrend();
 
   return (
-    <div className="bg-slate-800/50 rounded-lg p-3 mb-4">
+    <div className="bg-slate-800/50 rounded-lg p-3 mb-4 font-sans">
       <h4 className="text-xs text-slate-400 mb-2 font-medium">Live Analytics</h4>
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-slate-900/50 rounded-lg p-2">
@@ -113,3 +114,4 @@ export function TrainAnalytics({ trainId, currentPosition }: TrainAnalyticsProps
     </div>
   );
 }
+
