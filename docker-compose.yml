@@ -49,9 +49,12 @@ services:
     restart: always
 
   # 3. VECTOR TILE ENGINE (Serving Map Tracks & Station Assets)
+  # Disabled: frontend uses tiles.openfreemap.org. Enable with: docker-compose --profile tiles up tileserver
   tileserver:
     image: maptiler/tileserver-gl:v4.11.0
     container_name: mmt-tile-server
+    profiles:
+      - tiles
     volumes:
       - ./config/tileserver:/data
       - tile_cache:/var/cache/tileserver-gl
@@ -60,7 +63,7 @@ services:
     command: -c /data/config.json --public_url http://localhost:8080
     networks:
       - mapmytrain-mesh
-    restart: always
+    restart: "no"
 
   # 4. FASTAPI INGESTION ENGINE & WEBSOCKET BROADCASTER
   backend:
