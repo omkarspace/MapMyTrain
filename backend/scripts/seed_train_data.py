@@ -5,13 +5,28 @@ import json
 import logging
 import sys
 import os
+from datetime import time
 import asyncpg
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("SeedTrainData")
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data_train")
+DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data_train")
 BATCH_SIZE = 500
+
+
+def _parse_time(val):
+    """Parse a time string like '07:55:00' or '07:55' into a datetime.time object."""
+    if not val or val in ("None", "null", ""):
+        return None
+    try:
+        parts = str(val).strip().split(":")
+        h = int(parts[0])
+        m = int(parts[1]) if len(parts) > 1 else 0
+        s = int(parts[2]) if len(parts) > 2 else 0
+        return time(h, m, s)
+    except (ValueError, IndexError):
+        return None
 
 
 async def seed_stations(conn: asyncpg.Connection):
@@ -26,7 +41,7 @@ async def seed_stations(conn: asyncpg.Connection):
     batch = []
     for feature in features:
         props = feature.get("properties", {})
-        geom = feature.get("geometry", {})
+        geom = feature.get("geometry") or {}
         coords = geom.get("coordinates", [None, None])
         code = props.get("code")
         name = props.get("name")
@@ -71,14 +86,44 @@ async def seed_trains(conn: asyncpg.Connection):
         data = json.load(f)
 
     features = data.get("features", [])
+
+    # Collect all referenced station codes and insert stubs for missing ones
+    station_codes = set()
+    for feature in features:
+        props = feature.get("properties", {})
+        src = props.get("from_station_code")
+        dst = props.get("to_station_code")
+        if src:
+            station_codes.add(src)
+        if dst:
+            station_codes.add(dst)
+
+    existing = await conn.fetch("SELECT station_code FROM stations")
+    existing_codes = {r["station_code"] for r in existing}
+    missing = station_codes - existing_codes
+
+    if missing:
+        logger.info(f"Inserting {len(missing)} stub stations for train references...")
+        stub_batch = [(code, code) for code in sorted(missing)]
+        await conn.executemany(
+            """
+            INSERT INTO stations (station_code, station_name, geom)
+            VALUES ($1, $2, ST_SetSRID(ST_MakePoint(0, 0), 4326))
+            ON CONFLICT (station_code) DO NOTHING
+            """,
+            stub_batch,
+        )
+
     train_batch = []
     route_batch = []
     count = 0
 
     for feature in features:
         props = feature.get("properties", {})
-        geom = feature.get("geometry", {})
-        train_number = props.get("number")
+        geom = feature.get("geometry") or {}
+        train_number = str(props.get("number", ""))
+        if len(train_number) > 10:
+            train_number = train_number.split("-")[0]
         train_name = props.get("name")
         if not train_number or not train_name:
             continue
@@ -93,6 +138,8 @@ async def seed_trains(conn: asyncpg.Connection):
         train_type = props.get("type")
         zone = props.get("zone")
         return_train = props.get("return_train")
+        if return_train and len(str(return_train)) > 10:
+            return_train = str(return_train)[:10]
         classes = props.get("classes", [])
 
         runs_days = _compute_runs_days(props)
@@ -174,6 +221,12 @@ async def _insert_routes(conn: asyncpg.Connection, batch):
 
 async def seed_schedules(conn: asyncpg.Connection):
     """Load schedules.json and bulk insert into train_schedules."""
+    valid_rows = await conn.fetch("SELECT train_number FROM trains")
+    valid_train_numbers = {r["train_number"] for r in valid_rows}
+
+    # Drop FK constraint for faster bulk insert
+    await conn.execute("ALTER TABLE train_schedules DROP CONSTRAINT IF EXISTS train_schedules_train_number_fkey")
+
     path = os.path.join(DATA_DIR, "schedules.json")
     logger.info(f"Loading schedules from {path}...")
     with open(path, "r", encoding="utf-8") as f:
@@ -186,7 +239,9 @@ async def seed_schedules(conn: asyncpg.Connection):
 
     for entry in data:
         train_number = str(entry.get("train_number", ""))
-        station_code = entry.get("station_code", "")
+        if len(train_number) > 10:
+            train_number = train_number.split("-")[0]
+        station_code = str(entry.get("station_code", ""))[:10]
         if not train_number or not station_code:
             continue
 
@@ -195,8 +250,8 @@ async def seed_schedules(conn: asyncpg.Connection):
         train_stops[train_number] += 1
         stop_seq = train_stops[train_number]
 
-        arrival = entry.get("arrival")
-        departure = entry.get("departure")
+        arrival = _parse_time(entry.get("arrival"))
+        departure = _parse_time(entry.get("departure"))
         day = entry.get("day", 1)
 
         batch.append((
@@ -205,24 +260,33 @@ async def seed_schedules(conn: asyncpg.Connection):
         ))
 
         if len(batch) >= BATCH_SIZE:
-            await _insert_schedules(conn, batch)
+            await _insert_schedules(conn, batch, valid_train_numbers)
             count += len(batch)
             batch = []
 
     if batch:
-        await _insert_schedules(conn, batch)
+        await _insert_schedules(conn, batch, valid_train_numbers)
         count += len(batch)
 
     logger.info(f"Seeded {count} schedule stops across {len(train_stops)} trains.")
 
+    # Recreate FK constraint
+    await conn.execute(
+        "ALTER TABLE train_schedules ADD CONSTRAINT train_schedules_train_number_fkey "
+        "FOREIGN KEY (train_number) REFERENCES trains(train_number)"
+    )
 
-async def _insert_schedules(conn: asyncpg.Connection, batch):
+
+async def _insert_schedules(conn: asyncpg.Connection, batch, valid_train_numbers: set):
+    filtered = [row for row in batch if row[0] in valid_train_numbers]
+    if not filtered:
+        return
     await conn.executemany(
         """
         INSERT INTO train_schedules (train_number, station_code, station_name, arrival, departure, day, stop_sequence)
-        VALUES ($1, $2, $3, $4::time, $5::time, $6, $7)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         """,
-        batch,
+        filtered,
     )
 
 
