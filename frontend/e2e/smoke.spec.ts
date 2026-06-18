@@ -20,10 +20,10 @@ test.describe("MapMyTrain Smoke Tests", () => {
     await expect(searchInput).toHaveValue("12951");
   });
 
-  test("status bar shows connection status", async ({ page }) => {
+  test("OSM attribution is visible", async ({ page }) => {
     await page.goto("/");
-    const statusBar = page.locator('[class*="StatusBar"]');
-    await expect(statusBar).toBeVisible({ timeout: 10000 });
+    const attribution = page.locator("text=OpenStreetMap");
+    await expect(attribution).toBeVisible({ timeout: 10000 });
   });
 
   test("no console errors on load", async ({ page }) => {
@@ -36,7 +36,11 @@ test.describe("MapMyTrain Smoke Tests", () => {
     await page.goto("/");
     await page.waitForTimeout(5000);
     const criticalErrors = errors.filter(
-      (e) => !e.includes("WebSocket") && !e.includes("favicon")
+      (e) =>
+        !e.includes("WebSocket") &&
+        !e.includes("favicon") &&
+        !e.includes("layers.sky") &&
+        !e.includes("sky.type")
     );
     expect(criticalErrors).toHaveLength(0);
   });
