@@ -5,11 +5,13 @@ import * as THREE from "three";
 import maplibregl from "maplibre-gl";
 import { useMap } from "./MapContext";
 import { useTrainPositions } from "@/providers/WebSocketProvider";
-import { createTrainConsist, TrainConsist } from "./TrainModel";
+import { createTrainConsist, createTrainGeometry, TrainConsist } from "./TrainModel";
 import { getBlendedLightingConfig, getCurrentIST } from "@/lib/lighting";
 
 const TRAIN_ZOOM_THRESHOLD = 13;
+const LOD_LOW_ZOOM = 10;
 const COACH_SPACING = 0.6;
+const modelCache = new Map<string, THREE.Group>();
 
 interface TrainInstance {
   trainId: number;
@@ -18,6 +20,7 @@ interface TrainInstance {
   headlights: THREE.PointLight[];
   taillights: THREE.PointLight[];
   pathPoints: Array<{ lng: number; lat: number; bearing: number }>;
+  simplifiedLocomotive?: THREE.Group;
 }
 
 function createHeadlights(): THREE.PointLight[] {
@@ -56,6 +59,17 @@ function buildSplinePath(
   return new THREE.CatmullRomCurve3(points, false, "catmullrom", 0.5);
 }
 
+function lerpPosition(
+  current: { lng: number; lat: number },
+  target: { lng: number; lat: number },
+  t: number
+): { lng: number; lat: number } {
+  return {
+    lng: current.lng + (target.lng - current.lng) * t,
+    lat: current.lat + (target.lat - current.lat) * t,
+  };
+}
+
 export default function Train3DLayer() {
   const { map } = useMap();
   const { positions } = useTrainPositions();
@@ -66,6 +80,7 @@ export default function Train3DLayer() {
   const ambientLightRef = useRef<THREE.AmbientLight | null>(null);
   const dirLightRef = useRef<THREE.DirectionalLight | null>(null);
   const hemiLightRef = useRef<THREE.HemisphereLight | null>(null);
+  const interpolationsRef = useRef<Map<number, { from: THREE.Vector3; to: THREE.Vector3; progress: number }>>(new Map());
   const customLayerId = "train-3d-layer";
 
   useEffect(() => {
@@ -152,20 +167,48 @@ export default function Train3DLayer() {
         });
 
         if (show3D) {
+          const interpolationSpeed = 0.15;
+
           trainsRef.current.forEach((instance) => {
             const pos = positions.get(instance.trainId);
             if (!pos) return;
 
-            instance.pathPoints.push({ lng: pos.longitude, lat: pos.latitude, bearing: pos.bearing });
+            const targetPos = new THREE.Vector3(pos.longitude, pos.latitude, 0);
+
+            let interpolation = interpolationsRef.current.get(instance.trainId);
+            if (!interpolation) {
+              interpolation = {
+                from: targetPos.clone(),
+                to: targetPos.clone(),
+                progress: 1,
+              };
+              interpolationsRef.current.set(instance.trainId, interpolation);
+            }
+
+            if (interpolation.progress >= 1) {
+              interpolation.from.copy(interpolation.to);
+              interpolation.to.copy(targetPos);
+              interpolation.progress = 0;
+            }
+
+            interpolation.progress = Math.min(interpolation.progress + interpolationSpeed, 1);
+            const eased = interpolation.progress * interpolation.progress * (3 - 2 * interpolation.progress);
+            const smoothPos = lerpPosition(
+              { lng: interpolation.from.x, lat: interpolation.from.y },
+              { lng: interpolation.to.x, lat: interpolation.to.y },
+              eased
+            );
+
+            instance.pathPoints.push({ lng: smoothPos.lng, lat: smoothPos.lat, bearing: pos.bearing });
             if (instance.pathPoints.length > 8) {
               instance.pathPoints.shift();
             }
 
-            const path = buildSplinePath(instance.pathPoints, pos.longitude, pos.latitude, pos.bearing);
+            const path = buildSplinePath(instance.pathPoints, smoothPos.lng, smoothPos.lat, pos.bearing);
             const totalUnits = instance.coaches.length + 1;
             const coachSpacing = 1.0 / totalUnits;
 
-            const locomotivePos = path ? path.getPointAt(0) : new THREE.Vector3(pos.longitude, pos.latitude, 0);
+            const locomotivePos = path ? path.getPointAt(0) : new THREE.Vector3(smoothPos.lng, smoothPos.lat, 0);
             const locomotiveTangent = path ? path.getTangentAt(0) : new THREE.Vector3(1, 0, 0);
             const locomotiveAngle = Math.atan2(locomotiveTangent.y, locomotiveTangent.x);
 
@@ -178,7 +221,10 @@ export default function Train3DLayer() {
             instance.locomotive.matrix.multiply(new THREE.Matrix4().makeTranslation(mercator0.x, mercator0.y, mercator0.z));
             instance.locomotive.matrixAutoUpdate = false;
             instance.locomotive.matrixWorldNeedsUpdate = true;
-            instance.locomotive.visible = true;
+
+            const useSimplified = currentZoom < LOD_LOW_ZOOM && instance.simplifiedLocomotive;
+            const visibleLocomotive = useSimplified ? instance.simplifiedLocomotive! : instance.locomotive;
+            visibleLocomotive.visible = true;
 
             for (let i = 0; i < instance.coaches.length; i++) {
               const progress = (i + 1) * coachSpacing;
@@ -197,8 +243,8 @@ export default function Train3DLayer() {
               } else {
                 const offset = (i + 1) * COACH_SPACING;
                 const rad = (-pos.bearing * Math.PI) / 180;
-                coachLng = pos.longitude - Math.cos(rad) * offset * 0.00001;
-                coachLat = pos.latitude - Math.sin(rad) * offset * 0.00001;
+                coachLng = smoothPos.lng - Math.cos(rad) * offset * 0.00001;
+                coachLat = smoothPos.lat - Math.sin(rad) * offset * 0.00001;
                 coachAngle = (-pos.bearing * Math.PI) / 180;
               }
 
@@ -249,6 +295,8 @@ export default function Train3DLayer() {
       });
     }
 
+    const currentInterpolations = interpolationsRef.current;
+
     return () => {
       if (map.getLayer(customLayerId)) {
         map.removeLayer(customLayerId);
@@ -266,6 +314,8 @@ export default function Train3DLayer() {
         });
       }
       rendererRef.current?.dispose();
+      modelCache.clear();
+      currentInterpolations.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map]);
@@ -273,6 +323,8 @@ export default function Train3DLayer() {
   useEffect(() => {
     if (!sceneRef.current) return;
 
+    const scene = sceneRef.current;
+    const currentInterpolations = interpolationsRef.current;
     const existingIds = new Set(trainsRef.current.keys());
     const newIds = new Set(positions.keys());
 
@@ -280,7 +332,7 @@ export default function Train3DLayer() {
       if (!newIds.has(trainId)) {
         const instance = trainsRef.current.get(trainId);
         if (instance) {
-          sceneRef.current.remove(instance.locomotive);
+          scene.remove(instance.locomotive);
           instance.locomotive.traverse((obj) => {
             if (obj instanceof THREE.Mesh) {
               obj.geometry.dispose();
@@ -292,7 +344,7 @@ export default function Train3DLayer() {
             }
           });
           for (const coach of instance.coaches) {
-            sceneRef.current.remove(coach);
+            scene.remove(coach);
             coach.traverse((obj) => {
               if (obj instanceof THREE.Mesh) {
                 obj.geometry.dispose();
@@ -304,7 +356,21 @@ export default function Train3DLayer() {
               }
             });
           }
+          if (instance.simplifiedLocomotive) {
+            scene.remove(instance.simplifiedLocomotive);
+            instance.simplifiedLocomotive.traverse((obj) => {
+              if (obj instanceof THREE.Mesh) {
+                obj.geometry.dispose();
+                if (Array.isArray(obj.material)) {
+                  obj.material.forEach((m) => m.dispose());
+                } else {
+                  obj.material.dispose();
+                }
+              }
+            });
+          }
           trainsRef.current.delete(trainId);
+          currentInterpolations.delete(trainId);
         }
       }
     }
@@ -318,19 +384,25 @@ export default function Train3DLayer() {
         const coachCount = trainType === "freight" ? 12 : trainType === "rajdhani" ? 8 : 10;
         const consist: TrainConsist = createTrainConsist({ type: trainType, coachCount });
 
-        sceneRef.current?.add(consist.locomotive);
+        const simplifiedLoco = createTrainGeometry({
+          variant: trainType === "rajdhani" ? "rajdhani" : "普通",
+          scale: 0.8,
+        });
+
+        scene.add(consist.locomotive);
         for (const coach of consist.coaches) {
-          sceneRef.current?.add(coach);
+          scene.add(coach);
         }
+        scene.add(simplifiedLoco);
 
         const headlights = createHeadlights();
         for (const hl of headlights) {
-          sceneRef.current?.add(hl);
+          scene.add(hl);
         }
 
         const taillights = createTaillights();
         for (const tl of taillights) {
-          sceneRef.current?.add(tl);
+          scene.add(tl);
         }
 
         trainsRef.current.set(trainId, {
@@ -340,6 +412,7 @@ export default function Train3DLayer() {
           headlights,
           taillights,
           pathPoints: [{ lng: pos.longitude, lat: pos.latitude, bearing: pos.bearing }],
+          simplifiedLocomotive: simplifiedLoco,
         });
       }
     }
