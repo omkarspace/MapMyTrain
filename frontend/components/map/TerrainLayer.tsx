@@ -26,30 +26,13 @@ export default function TerrainLayer({ enabled = true }: TerrainLayerProps) {
           });
         }
 
-        map.setTerrain({ source: "terrain-dem", exaggeration: 1.8 });
-
-        if (!map.getLayer("sky-terrain")) {
-          map.addLayer(
-            {
-              id: "sky-terrain",
-              type: "sky" as never,
-              paint: {
-                "sky-type": "atmosphere",
-                "sky-atmosphere-sun": [0.0, 90.0],
-                "sky-atmosphere-sun-intensity": 5,
-              } as never,
-            } as never
-          );
-        }
+        map.setTerrain({ source: "terrain-dem", exaggeration: 2.5 });
       } catch {
         // Terrain not available
       }
     } else {
       try {
         map.setTerrain(null);
-        if (map.getLayer("sky-terrain")) {
-          map.removeLayer("sky-terrain");
-        }
         if (map.getSource("terrain-dem")) {
           map.removeSource("terrain-dem");
         }
@@ -89,9 +72,6 @@ export default function TerrainLayer({ enabled = true }: TerrainLayerProps) {
       if (!map) return;
       try {
         map.setTerrain(null);
-        if (map.getLayer("sky-terrain")) {
-          map.removeLayer("sky-terrain");
-        }
         if (map.getSource("terrain-dem")) {
           map.removeSource("terrain-dem");
         }
