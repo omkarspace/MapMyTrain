@@ -15,13 +15,14 @@ async def list_trains(
     """List all trains with pagination."""
     rows = await conn.fetch(
         "SELECT train_number, train_name, source_station_code, destination_station_code, "
-        "runs_on_days, train_type, zone, return_train, distance_km "
+        "runs_on_days, train_type, zone, return_train, distance_km, "
+        "COUNT(*) OVER() AS total_count "
         "FROM trains ORDER BY train_number LIMIT $1 OFFSET $2",
         limit,
         offset,
     )
-    trains = [TrainResponse(**dict(row)) for row in rows]
-    count = await conn.fetchval("SELECT COUNT(*) FROM trains")
+    count = rows[0]["total_count"] if rows else 0
+    trains = [TrainResponse(**{k: v for k, v in dict(row).items() if k != "total_count"}) for row in rows]
     return TrainListResponse(trains=trains, count=count)
 
 

@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     # Operational Flag Controls
     DEVELOPMENT_MOCK_MODE: bool = True
     INGESTION_INTERVAL_SECONDS: int = 120
+    CORS_ORIGINS: str = "http://localhost:3000"
 
     model_config = SettingsConfigDict(
         env_file=".env",

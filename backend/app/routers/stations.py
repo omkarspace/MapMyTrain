@@ -14,13 +14,14 @@ async def list_stations(
     """List all stations with pagination."""
     rows = await conn.fetch(
         "SELECT station_code, station_name, division, zone, "
-        "ST_X(geom) as longitude, ST_Y(geom) as latitude "
+        "ST_X(geom) as longitude, ST_Y(geom) as latitude, "
+        "COUNT(*) OVER() AS total_count "
         "FROM stations ORDER BY station_code LIMIT $1 OFFSET $2",
         limit,
         offset,
     )
-    stations = [dict(row) for row in rows]
-    count = await conn.fetchval("SELECT COUNT(*) FROM stations")
+    count = rows[0]["total_count"] if rows else 0
+    stations = [{k: v for k, v in dict(row).items() if k != "total_count"} for row in rows]
     return {"stations": stations, "count": count}
 
 
@@ -38,8 +39,8 @@ async def get_stations_in_bbox(
         "SELECT station_code, station_name, division, zone, "
         "ST_X(geom) as longitude, ST_Y(geom) as latitude, "
         "CASE "
-        "  WHEN station_code IN ('NDLS', 'MAS', 'HWH', 'BCT', 'SBC', 'SC', 'NR', 'ER') THEN 'junction' "
         "  WHEN station_code IN ('NDLS', 'MAS', 'HWH', 'BCT') THEN 'terminal' "
+        "  WHEN station_code IN ('SBC', 'SC', 'NR', 'ER') THEN 'junction' "
         "  ELSE 'regular' "
         "END as station_type "
         "FROM stations "

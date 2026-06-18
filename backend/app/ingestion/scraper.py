@@ -89,9 +89,18 @@ NTES_BASE_URL = "https://ntes.indianrail.gov.in/Coreata"
 NTES_QUERY_PATH = "/QueryResult?queryType=LiveTrainStatus&trainNo={train_number}&date={date}"
 
 RAIL_YATRI_URL = "https://www.railyatri.in/api/v1/running-status?train_number={train_number}"
-RUNNING_STATUS_URL = "https://.runningstatus.in/api/v1/status/{train_number}"
+RUNNING_STATUS_URL = "https://runningstatus.in/api/v1/status/{train_number}"
 
 COOKIE_HANDSHAKE_URL = "https://ntes.indianrail.gov.in/"
+
+
+class ScraperHTTPError(Exception):
+    """Raised when scraper encounters an HTTP error that should be propagated."""
+
+    def __init__(self, status_code: int, message: str):
+        self.status_code = status_code
+        self.message = message
+        super().__init__(f"HTTP {status_code}: {message}")
 
 
 async def fetch_session_cookies(client: httpx.AsyncClient) -> dict:
@@ -128,20 +137,17 @@ async def fetch_train_status(
 
     url = f"{NTES_BASE_URL}{NTES_QUERY_PATH.format(train_number=train_number, date=date)}"
 
-    try:
-        async with httpx.AsyncClient() as client:
-            cookies = session_cookies or await fetch_session_cookies(client)
-            response = await client.get(
-                url, headers=headers, cookies=cookies, timeout=10.0
-            )
-            response.raise_for_status()
-            return parse_ntes_response(response.text)
-    except httpx.HTTPStatusError as e:
-        logger.warning(f"HTTP {e.response.status_code} for train {train_number}")
-        return None
-    except Exception as e:
-        logger.error(f"Scraper error for train {train_number}: {e}")
-        return None
+    async with httpx.AsyncClient() as client:
+        cookies = session_cookies or await fetch_session_cookies(client)
+        response = await client.get(
+            url, headers=headers, cookies=cookies, timeout=10.0
+        )
+
+        if response.status_code in (403, 429):
+            raise ScraperHTTPError(response.status_code, f"NTES returned {response.status_code}")
+
+        response.raise_for_status()
+        return parse_ntes_response(response.text)
 
 
 async def fetch_from_railyatri(train_number: str) -> Optional[TrainTelemetry]:
