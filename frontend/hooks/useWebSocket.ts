@@ -56,11 +56,12 @@ async function loadMockTrains(): Promise<Map<number, { train_id: number; longitu
   return mockPositions;
 }
 
-function createWorker(): Worker | null {
+function createWorker(): { worker: Worker; revoke: () => void } | null {
   try {
     const blob = new Blob([WORKER_CODE], { type: "application/javascript" });
     const url = URL.createObjectURL(blob);
-    return new Worker(url);
+    const worker = new Worker(url);
+    return { worker, revoke: () => URL.revokeObjectURL(url) };
   } catch {
     return null;
   }
@@ -113,9 +114,10 @@ export function useWebSocket() {
       };
     }
 
-    const worker = createWorker();
+    const result = createWorker();
 
-    if (worker) {
+    if (result) {
+      const { worker, revoke } = result;
       workerRef.current = worker;
 
       worker.onmessage = (e) => {
@@ -130,6 +132,7 @@ export function useWebSocket() {
       return () => {
         worker.postMessage({ type: "disconnect" });
         worker.terminate();
+        revoke();
         cancelAnimationFrame(animFrameRef.current);
       };
     }

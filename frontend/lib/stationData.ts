@@ -172,6 +172,7 @@ export const MAJOR_STATION_POINTS: FeatureCollection<Point, StationProperties> =
     stationPoint("ERS", "Ernakulam Junction", 76.2678, 9.9766, "junction", 4),
     stationPoint("TVC", "Thiruvananthapuram Central", 76.9558, 8.4879, "terminal", 4),
     stationPoint("CLT", "Kozhikode", 75.7805, 11.2588, "regular", 4),
+    stationPoint("SRTN", "Satna Junction", 80.8374, 24.5649, "junction", 4),
     stationPoint("JBP", "Jabalpur", 79.9501, 23.1827, "junction", 4),
     stationPoint("MAO", "Madgaon Junction", 73.9575, 15.2689, "junction", 4),
     stationPoint("ST", "Surat", 72.8311, 21.1958, "regular", 4),

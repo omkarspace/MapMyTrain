@@ -15,7 +15,7 @@ interface VelocityData {
   delay: number;
 }
 
-const calculateVelocity = (prev: VelocityData[], _current: TrainPosition): number => {
+const calculateVelocity = (prev: VelocityData[]): number => {
   if (prev.length === 0) return 0;
   // Simplified velocity calculation (km/h estimate)
   // In production, use Haversine formula for accurate distance
@@ -39,7 +39,7 @@ export function TrainAnalytics({ trainId, currentPosition }: TrainAnalyticsProps
     const timer = setTimeout(() => {
       const now = Date.now();
       setHistory((prev) => {
-        const velocity = calculateVelocity(prev, currentPosition);
+        const velocity = calculateVelocity(prev);
         const newEntry: VelocityData = {
           timestamp: now,
           velocity,

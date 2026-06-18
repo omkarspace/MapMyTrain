@@ -135,11 +135,17 @@ export default function TrainMarker({ position, onClick }: TrainMarkerProps) {
     if (!markerRef.current || !elRef.current) return;
 
     markerRef.current.setLngLat([position.longitude, position.latitude]);
+  }, [position.longitude, position.latitude]);
+
+  // 3. Update bearing and delay separately to avoid SVG flicker
+  useEffect(() => {
+    if (!elRef.current) return;
+
     elRef.current.className = `train-marker-3d ${getDelayClass(position.delay)}`;
     elRef.current.innerHTML = buildMarkerSvg(position.bearing, position.delay);
-  }, [position.longitude, position.latitude, position.bearing, position.delay]);
+  }, [position.bearing, position.delay]);
 
-  // 3. Listen to map zoom events to toggle visibility
+  // 4. Listen to map zoom events to toggle visibility
   useEffect(() => {
     if (!map) return;
 
@@ -162,7 +168,7 @@ export default function TrainMarker({ position, onClick }: TrainMarkerProps) {
     };
   }, [map]);
 
-  // 4. Update the trail history
+  // 5. Update the trail history
   useEffect(() => {
     addTrailPoint(position.longitude, position.latitude);
   }, [position.longitude, position.latitude, addTrailPoint]);
