@@ -188,7 +188,7 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
           {isOpen && suggestions.length > 0 && (
             <div
               ref={dropdownRef}
-              className="absolute top-full mt-1 w-full bg-slate-900/95 backdrop-blur-sm border border-slate-700 rounded-lg overflow-hidden shadow-xl max-h-80 overflow-y-auto"
+              className="absolute top-full mt-1 w-full bg-slate-900/95 backdrop-blur-sm border border-slate-700 rounded-lg overflow-hidden shadow-xl max-h-80 overflow-y-auto animate-fade-scale-in"
             >
               {suggestions.map((train, index) => (
                 <button

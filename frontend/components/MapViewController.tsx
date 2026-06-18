@@ -59,8 +59,6 @@ export default function MapViewController() {
       <SearchBar onTrainSelect={handleTrainSelect} trains={trains} />
       <RouteLayer
         trainNumber={selectedTrain?.train_number ?? null}
-        sourceStation={selectedTrain?.source_station_code}
-        destinationStation={selectedTrain?.destination_station_code}
       />
       {showMarkers &&
         Array.from(positions.entries()).map(([trainId, pos]) => (

@@ -189,7 +189,8 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
               <span>Day</span>
             </div>
             {scheduleLoading ? (
-              <div className="px-3 py-4 text-xs text-slate-500 text-center">
+              <div className="px-3 py-4 text-xs text-slate-500 text-center flex items-center justify-center gap-2">
+                <div className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
                 Loading schedule...
               </div>
             ) : schedule.length > 0 ? (

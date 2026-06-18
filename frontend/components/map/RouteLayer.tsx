@@ -7,8 +7,6 @@ import { TRACK_COLOR_GLOW } from "@/lib/constants";
 
 interface RouteLayerProps {
   trainNumber: string | null;
-  sourceStation?: string;
-  destinationStation?: string;
 }
 
 const ANIMATION_SPEED = 0.005;

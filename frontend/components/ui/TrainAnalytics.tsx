@@ -101,7 +101,7 @@ export function TrainAnalytics({ trainId, currentPosition }: TrainAnalyticsProps
             {history.slice(-10).map((h, i) => (
               <div
                 key={i}
-                className="flex-1 bg-slate-700 rounded-t"
+                className="flex-1 bg-slate-700 rounded-t transition-all duration-300 ease-out"
                 style={{
                   height: `${Math.min(100, (h.delay / 60) * 100)}%`,
                   minHeight: "2px",
