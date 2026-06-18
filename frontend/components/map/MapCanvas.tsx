@@ -13,8 +13,10 @@ import {
 } from "@/lib/constants";
 import { useMap } from "./MapContext";
 
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * Math.min(1, Math.max(0, t));
+function springLerp(current: number, target: number, stiffness: number, damping: number): number {
+  const diff = target - current;
+  const force = diff * stiffness;
+  return current + force * (1 - damping);
 }
 
 export default function MapCanvas() {
@@ -25,6 +27,8 @@ export default function MapCanvas() {
 
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const map = new maplibregl.Map({
       container: mapContainer.current,
@@ -73,16 +77,19 @@ export default function MapCanvas() {
       }
 
       if (isAnimatingRef.current) {
-        const easeT = 0.08;
-        const newPitch = lerp(currentPitch, targetPitch, easeT);
+        const stiffness = prefersReducedMotion ? 0.3 : 0.12;
+        const damping = prefersReducedMotion ? 0.7 : 0.45;
+
+        const newPitch = springLerp(currentPitch, targetPitch, stiffness, damping);
         const bearingDiff = targetBearing - currentBearing;
         const normalizedDiff = ((bearingDiff + 180) % 360) - 180;
-        const newBearing = currentBearing + normalizedDiff * easeT;
+        const newBearing = currentBearing + normalizedDiff * stiffness;
 
         const pitchDiff = Math.abs(newPitch - currentPitch);
-        const bearingDiffAbs = Math.abs(normalizedDiff * easeT);
+        const bearingDiffAbs = Math.abs(normalizedDiff * stiffness);
 
-        if (pitchDiff < 0.05 && bearingDiffAbs < 0.05) {
+        const settledThreshold = prefersReducedMotion ? 0.5 : 0.05;
+        if (pitchDiff < settledThreshold && bearingDiffAbs < settledThreshold) {
           currentPitch = targetPitch;
           currentBearing = targetBearing;
           isAnimatingRef.current = false;

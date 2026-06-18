@@ -110,7 +110,7 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
   };
 
   return (
-    <div className="absolute top-4 left-4 right-4 z-20 max-w-lg">
+    <div className="absolute top-4 left-4 right-4 z-20 max-w-lg animate-slide-down-enter">
       <div className="relative">
         <div className="flex gap-2 mb-2">
           <button

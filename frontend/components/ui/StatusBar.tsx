@@ -1,6 +1,6 @@
 export default function StatusBar() {
   return (
-    <div className="absolute bottom-2 right-2 z-50 flex items-center gap-3">
+    <div className="absolute bottom-2 right-2 z-50 flex items-center gap-3 animate-fade-in">
       <div className="text-[10px] text-slate-400 bg-slate-950/60 px-2 py-0.5 rounded backdrop-blur-sm">
         ©{" "}
         <a

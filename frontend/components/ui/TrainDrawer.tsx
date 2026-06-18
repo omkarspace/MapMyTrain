@@ -84,7 +84,7 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
   return (
     <div
       ref={drawerRef}
-      className="absolute bottom-0 left-0 right-0 z-20 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 rounded-t-2xl shadow-2xl max-h-[70vh] overflow-hidden flex flex-col"
+      className="absolute bottom-0 left-0 right-0 z-20 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 rounded-t-2xl shadow-2xl max-h-[70vh] overflow-hidden flex flex-col animate-slide-up-enter"
     >
       <div className="w-12 h-1 bg-slate-700 rounded-full mx-auto mt-3" />
       <div className="p-4 overflow-y-auto flex-1">

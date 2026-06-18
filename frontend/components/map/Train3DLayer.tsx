@@ -21,6 +21,7 @@ interface TrainInstance {
   taillights: THREE.PointLight[];
   pathPoints: Array<{ lng: number; lat: number; bearing: number }>;
   simplifiedLocomotive?: THREE.Group;
+  birthTime: number;
 }
 
 function createHeadlights(): THREE.PointLight[] {
@@ -168,10 +169,35 @@ export default function Train3DLayer() {
 
         if (show3D) {
           const interpolationSpeed = 0.15;
+          const entryAnimDuration = 500;
+          const bounds = map.getBounds();
+          const ne = bounds.getNorthEast();
+          const sw = bounds.getSouthWest();
+          const padLng = (ne.lng - sw.lng) * 0.05;
+          const padLat = (ne.lat - sw.lat) * 0.05;
 
           trainsRef.current.forEach((instance) => {
             const pos = positions.get(instance.trainId);
             if (!pos) return;
+
+            const inView =
+              pos.longitude >= sw.lng - padLng &&
+              pos.longitude <= ne.lng + padLng &&
+              pos.latitude >= sw.lat - padLat &&
+              pos.latitude <= ne.lat + padLat;
+            if (!inView) {
+              instance.locomotive.visible = false;
+              for (const coach of instance.coaches) {
+                coach.visible = false;
+              }
+              return;
+            }
+
+            const age = Date.now() - instance.birthTime;
+            const entryProgress = Math.min(age / entryAnimDuration, 1);
+            const entryEased = entryProgress < 1
+              ? entryProgress * entryProgress * (3 - 2 * entryProgress)
+              : 1;
 
             const targetPos = new THREE.Vector3(pos.longitude, pos.latitude, 0);
 
@@ -213,7 +239,8 @@ export default function Train3DLayer() {
             const locomotiveAngle = Math.atan2(locomotiveTangent.y, locomotiveTangent.x);
 
             const mercator0 = maplibregl.MercatorCoordinate.fromLngLat([locomotivePos.x, locomotivePos.y], 0);
-            const scale = mercator0.meterInMercatorCoordinateUnits();
+            const baseScale = mercator0.meterInMercatorCoordinateUnits();
+            const scale = baseScale * entryEased;
 
             instance.locomotive.matrix.identity();
             instance.locomotive.matrix.scale(new THREE.Vector3(scale, scale, scale));
@@ -221,6 +248,7 @@ export default function Train3DLayer() {
             instance.locomotive.matrix.multiply(new THREE.Matrix4().makeTranslation(mercator0.x, mercator0.y, mercator0.z));
             instance.locomotive.matrixAutoUpdate = false;
             instance.locomotive.matrixWorldNeedsUpdate = true;
+            instance.locomotive.visible = entryEased > 0.01;
 
             const useSimplified = currentZoom < LOD_LOW_ZOOM && instance.simplifiedLocomotive;
             const visibleLocomotive = useSimplified ? instance.simplifiedLocomotive! : instance.locomotive;
@@ -256,7 +284,7 @@ export default function Train3DLayer() {
               instance.coaches[i].matrix.multiply(new THREE.Matrix4().makeTranslation(mercator.x, mercator.y, mercator.z));
               instance.coaches[i].matrixAutoUpdate = false;
               instance.coaches[i].matrixWorldNeedsUpdate = true;
-              instance.coaches[i].visible = true;
+              instance.coaches[i].visible = entryEased > 0.01;
             }
 
             const headlightT = 0.01;
@@ -413,6 +441,7 @@ export default function Train3DLayer() {
           taillights,
           pathPoints: [{ lng: pos.longitude, lat: pos.latitude, bearing: pos.bearing }],
           simplifiedLocomotive: simplifiedLoco,
+          birthTime: Date.now(),
         });
       }
     }
