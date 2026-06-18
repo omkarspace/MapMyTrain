@@ -28,8 +28,8 @@ async def get_train_schedule(
         stops.append({
             "station_code": row["station_code"],
             "station_name": row["station_name"],
-            "arrival": row["arrival"].strftime("%H:%M") if row["arrival"] else None,
-            "departure": row["departure"].strftime("%H:%M") if row["departure"] else None,
+            "arrival": row["arrival"] if row["arrival"] else None,
+            "departure": row["departure"] if row["departure"] else None,
             "day": row["day"],
             "stop_sequence": row["stop_sequence"],
         })
