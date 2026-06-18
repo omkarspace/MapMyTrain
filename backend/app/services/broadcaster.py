@@ -2,7 +2,7 @@ import logging
 import json
 from typing import AsyncGenerator
 import redis.asyncio as redis
-from app.config import settings
+from app.services.redis_client import get_redis_client
 
 logger = logging.getLogger("MapMyTrain.Broadcaster")
 
@@ -11,20 +11,17 @@ REDIS_CHANNEL = "train:updates"
 
 class Broadcaster:
     def __init__(self):
-        self.redis_url = settings.REDIS_URL
         self._client: redis.Redis | None = None
 
     async def initialize(self):
-        """Create Redis connection for pub/sub."""
+        """Get shared Redis connection for pub/sub."""
         if self._client is None:
-            self._client = redis.from_url(self.redis_url, decode_responses=True)
+            self._client = await get_redis_client()
             logger.info("Broadcaster Redis connection established.")
 
     async def close(self):
-        """Close Redis connection."""
-        if self._client:
-            await self._client.close()
-            self._client = None
+        """No-op - shared client is closed by redis_client."""
+        self._client = None
 
     async def publish(self, train_number: str, data: dict) -> None:
         """Publish train update to Redis channel."""
@@ -44,5 +41,4 @@ class Broadcaster:
                 yield message["data"]
 
 
-# Global broadcaster instance
 broadcaster = Broadcaster()

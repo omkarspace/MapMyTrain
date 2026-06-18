@@ -78,30 +78,3 @@ def parse_ntes_response(raw: str) -> Optional[TrainTelemetry]:
     except Exception as e:
         logger.error(f"Parse error: {e}")
         return None
-
-
-def parse_ntes_html_fallback(html: str) -> Optional[TrainTelemetry]:
-    """BeautifulSoup fallback parser for HTML responses."""
-    try:
-        from bs4 import BeautifulSoup
-        soup = BeautifulSoup(html, "html.parser")
-
-        train_number_tag = soup.find("span", {"id": "trainNo"})
-        if not train_number_tag:
-            return None
-        train_number = train_number_tag.get_text(strip=True)
-
-        lat_tag = soup.find("span", {"id": "latitude"})
-        lng_tag = soup.find("span", {"id": "longitude"})
-        delay_tag = soup.find("span", {"id": "delay"})
-
-        return TrainTelemetry(
-            train_number=train_number,
-            current_lng=float(lng_tag.get_text(strip=True)) if lng_tag else None,
-            current_lat=float(lat_tag.get_text(strip=True)) if lat_tag else None,
-            delay_minutes=int(delay_tag.get_text(strip=True)) if delay_tag else 0,
-            bearing=0,
-        )
-    except Exception as e:
-        logger.error(f"HTML fallback parse error: {e}")
-        return None

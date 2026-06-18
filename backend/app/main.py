@@ -11,6 +11,7 @@ from app.routers.schedules import router as schedules_router
 from app.routers.ws import router as ws_router
 from app.services.broadcaster import broadcaster
 from app.services.cache import cache_service
+from app.services.redis_client import close_redis_client
 from app.ingestion.worker import run_ingestion_loop
 from app.services.cleanup import run_cleanup_loop
 
@@ -51,6 +52,7 @@ async def lifespan(app: FastAPI):
         pass
     await cache_service.close()
     await broadcaster.close()
+    await close_redis_client()
     await db_manager.close()
     logger.info("MapMyTrain backend stopped.")
 
