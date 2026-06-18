@@ -1,4 +1,3 @@
-# frontend/Dockerfile
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -7,6 +6,10 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+
+ARG NEXT_PUBLIC_BACKEND_WS_URL=ws://localhost:8000/api/v1/stream
+ARG NEXT_PUBLIC_TILE_SERVER_URL=http://localhost:8080
+ARG NEXT_PUBLIC_USE_MOCK_TELEMETRY=false
 
 RUN npm run build
 
@@ -27,7 +30,7 @@ USER nextjs
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD ["wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
 
 CMD ["node", "server.js"]

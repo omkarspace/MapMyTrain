@@ -1,4 +1,3 @@
-# docker-compose.yml
 networks:
   mapmytrain-mesh:
     driver: bridge
@@ -9,7 +8,6 @@ volumes:
   tile_cache:
 
 services:
-  # 1. SPATIAL DATABASE ENGINE
   db:
     image: postgis/postgis:16-3.4
     container_name: mmt-postgis-db
@@ -28,9 +26,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     restart: always
 
-  # 2. CACHING & REAL-TIME PUB/SUB BUFFER
   redis:
     image: redis:7.2-alpine
     container_name: mmt-redis-cache
@@ -46,10 +47,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     restart: always
 
-  # 3. VECTOR TILE ENGINE (Serving Map Tracks & Station Assets)
-  # Disabled: frontend uses tiles.openfreemap.org. Enable with: docker-compose --profile tiles up tileserver
   tileserver:
     image: maptiler/tileserver-gl:v4.11.0
     container_name: mmt-tile-server
@@ -65,7 +68,6 @@ services:
       - mapmytrain-mesh
     restart: "no"
 
-  # 4. FASTAPI INGESTION ENGINE & WEBSOCKET BROADCASTER
   backend:
     build:
       context: ./backend
@@ -85,6 +87,10 @@ services:
         condition: service_healthy
     networks:
       - mapmytrain-mesh
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     restart: always
     logging:
       driver: "json-file"
@@ -92,22 +98,30 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # 5. NEXT.JS CLIENT FRAMEWORK (WebGL Viewport Layer)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_WS_URL: ${NEXT_PUBLIC_BACKEND_WS_URL:-ws://localhost:8000/api/v1/stream}
+        NEXT_PUBLIC_TILE_SERVER_URL: ${NEXT_PUBLIC_TILE_SERVER_URL:-http://localhost:8080}
+        NEXT_PUBLIC_USE_MOCK_TELEMETRY: ${NEXT_PUBLIC_USE_MOCK_TELEMETRY:-false}
     container_name: mmt-nextjs-frontend
     environment:
-      - NEXT_PUBLIC_BACKEND_WS_URL=ws://localhost:8000/api/v1/stream
-      - NEXT_PUBLIC_TILE_SERVER_URL=http://localhost:8080
+      - NEXT_PUBLIC_BACKEND_WS_URL=${NEXT_PUBLIC_BACKEND_WS_URL:-ws://localhost:8000/api/v1/stream}
+      - NEXT_PUBLIC_TILE_SERVER_URL=${NEXT_PUBLIC_TILE_SERVER_URL:-http://localhost:8080}
       - NEXT_PUBLIC_USE_MOCK_TELEMETRY=${NEXT_PUBLIC_USE_MOCK_TELEMETRY:-false}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - mapmytrain-mesh
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     restart: always
     logging:
       driver: "json-file"
