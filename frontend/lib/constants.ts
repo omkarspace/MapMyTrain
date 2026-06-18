@@ -17,6 +17,10 @@ export const STATION_HEIGHT_MAJOR = 25;
 export const STATION_HEIGHT_REGULAR = 15;
 export const STATION_HEIGHT_MINZoom = 12;
 
+export const ZOOM_TIER_COUNTRY_MAX = 6;
+export const ZOOM_TIER_REGIONAL_MAX = 10;
+export const ZOOM_TIER_CITY_MAX = 13;
+
 export const BUILDING_MINZOOM = 14;
 export const BUILDING_COLOR_BASE = "#1a1a2e";
 export const BUILDING_COLOR_HIGHLIGHT = "#2d2d44";

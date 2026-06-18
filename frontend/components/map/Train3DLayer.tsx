@@ -6,7 +6,7 @@ import maplibregl from "maplibre-gl";
 import { useMap } from "./MapContext";
 import { useTrainPositions } from "@/providers/WebSocketProvider";
 import { createTrainConsist, TrainConsist } from "./TrainModel";
-import { getLightingConfig, getCurrentIST } from "@/lib/lighting";
+import { getBlendedLightingConfig, getCurrentIST } from "@/lib/lighting";
 
 const TRAIN_ZOOM_THRESHOLD = 13;
 const COACH_SPACING = 0.6;
@@ -66,7 +66,6 @@ export default function Train3DLayer() {
   const ambientLightRef = useRef<THREE.AmbientLight | null>(null);
   const dirLightRef = useRef<THREE.DirectionalLight | null>(null);
   const hemiLightRef = useRef<THREE.HemisphereLight | null>(null);
-  const lastPhaseRef = useRef<string>("");
   const customLayerId = "train-3d-layer";
 
   useEffect(() => {
@@ -91,7 +90,7 @@ export default function Train3DLayer() {
         });
         rendererRef.current.autoClear = false;
 
-        const config = getLightingConfig();
+        const config = getBlendedLightingConfig();
 
         const ambientLight = new THREE.AmbientLight(config.ambientColor, config.ambientIntensity);
         sceneRef.current.add(ambientLight);
@@ -109,8 +108,6 @@ export default function Train3DLayer() {
         );
         sceneRef.current.add(hemiLight);
         hemiLightRef.current = hemiLight;
-
-        lastPhaseRef.current = getCurrentIST().phase;
       },
 
       render: function (_gl: WebGLRenderingContext, options: maplibregl.CustomRenderMethodInput) {
@@ -119,35 +116,38 @@ export default function Train3DLayer() {
         const m = new THREE.Matrix4().fromArray(options.modelViewProjectionMatrix as number[]);
         cameraRef.current.projectionMatrix = m;
 
-        const currentPhase = getCurrentIST().phase;
-        if (currentPhase !== lastPhaseRef.current) {
-          const config = getLightingConfig(currentPhase);
-          if (ambientLightRef.current) {
-            ambientLightRef.current.color.set(config.ambientColor);
-            ambientLightRef.current.intensity = config.ambientIntensity;
-          }
-          if (dirLightRef.current) {
-            dirLightRef.current.color.set(config.directionalColor);
-            dirLightRef.current.intensity = config.directionalIntensity;
-          }
-          if (hemiLightRef.current) {
-            hemiLightRef.current.color.set(config.skyTopColor);
-            hemiLightRef.current.groundColor.set(config.fogColor);
-            hemiLightRef.current.intensity = config.hemisphereIntensity;
-          }
-          lastPhaseRef.current = currentPhase;
+        const time = getCurrentIST();
+        const config = getBlendedLightingConfig(time);
+
+        if (ambientLightRef.current) {
+          ambientLightRef.current.color.set(config.ambientColor);
+          ambientLightRef.current.intensity = config.ambientIntensity;
+        }
+        if (dirLightRef.current) {
+          dirLightRef.current.color.set(config.directionalColor);
+          dirLightRef.current.intensity = config.directionalIntensity;
+        }
+        if (hemiLightRef.current) {
+          hemiLightRef.current.color.set(config.skyTopColor);
+          hemiLightRef.current.groundColor.set(config.fogColor);
+          hemiLightRef.current.intensity = config.hemisphereIntensity;
         }
 
-        const isNight = currentPhase === "night" || currentPhase === "dusk";
+        const isNight = time.phase === "night" || time.phase === "dusk";
+        const isDawn = time.phase === "dawn";
         const currentZoom = map.getZoom();
         const show3D = currentZoom >= TRAIN_ZOOM_THRESHOLD;
 
+        const nightFactor = isNight ? 1.0 : isDawn ? 0.3 : 0;
+        const headlightIntensity = show3D ? 1.5 * nightFactor : 0;
+        const taillightIntensity = show3D ? 0.8 * nightFactor : 0;
+
         trainsRef.current.forEach((instance) => {
           for (const hl of instance.headlights) {
-            hl.intensity = show3D && isNight ? 1.5 : 0;
+            hl.intensity = headlightIntensity;
           }
           for (const tl of instance.taillights) {
-            tl.intensity = show3D && isNight ? 0.8 : 0;
+            tl.intensity = taillightIntensity;
           }
         });
 

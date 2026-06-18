@@ -8,7 +8,7 @@ interface TerrainContextType {
 }
 
 const TerrainContext = createContext<TerrainContextType>({
-  terrainEnabled: false,
+  terrainEnabled: true,
   toggleTerrain: () => {},
 });
 
@@ -17,7 +17,7 @@ export function useTerrain() {
 }
 
 export function TerrainProvider({ children }: { children: ReactNode }) {
-  const [terrainEnabled, setTerrainEnabled] = useState(false);
+  const [terrainEnabled, setTerrainEnabled] = useState(true);
 
   const toggleTerrain = useCallback(() => {
     setTerrainEnabled((prev) => !prev);

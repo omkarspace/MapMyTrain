@@ -1,31 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useMap } from "@/components/map/MapContext";
 
 interface TerrainLayerProps {
   enabled?: boolean;
 }
 
-export default function TerrainLayer({ enabled = false }: TerrainLayerProps) {
+export default function TerrainLayer({ enabled = true }: TerrainLayerProps) {
   const { map } = useMap();
-  const [isLoaded, setIsLoaded] = useState(false);
+  const isLoadedRef = useRef(false);
+  const [, forceRender] = useState(0);
 
-  useEffect(() => {
+  const setupTerrain = useCallback(() => {
     if (!map) return;
-
-    const handleLoad = () => {
-      setIsLoaded(true);
-    };
-
-    map.on("load", handleLoad);
-    return () => {
-      map.off("load", handleLoad);
-    };
-  }, [map]);
-
-  useEffect(() => {
-    if (!map || !isLoaded) return;
 
     if (enabled) {
       try {
@@ -38,7 +26,7 @@ export default function TerrainLayer({ enabled = false }: TerrainLayerProps) {
           });
         }
 
-        map.setTerrain({ source: "terrain-dem", exaggeration: 1.3 });
+        map.setTerrain({ source: "terrain-dem", exaggeration: 1.8 });
 
         if (!map.getLayer("sky-terrain")) {
           map.addLayer(
@@ -69,8 +57,36 @@ export default function TerrainLayer({ enabled = false }: TerrainLayerProps) {
         // Ignore cleanup errors
       }
     }
+  }, [map, enabled]);
+
+  useEffect(() => {
+    if (!map) return;
+
+    if (map.isStyleLoaded()) {
+      if (!isLoadedRef.current) {
+        isLoadedRef.current = true;
+        forceRender((n) => n + 1);
+      }
+      return;
+    }
+
+    const handleLoad = () => {
+      isLoadedRef.current = true;
+      forceRender((n) => n + 1);
+    };
+
+    map.on("load", handleLoad);
+    return () => {
+      map.off("load", handleLoad);
+    };
+  }, [map]);
+
+  useEffect(() => {
+    if (!isLoadedRef.current) return;
+    setupTerrain();
 
     return () => {
+      if (!map) return;
       try {
         map.setTerrain(null);
         if (map.getLayer("sky-terrain")) {
@@ -83,7 +99,7 @@ export default function TerrainLayer({ enabled = false }: TerrainLayerProps) {
         // Ignore cleanup errors
       }
     };
-  }, [map, isLoaded, enabled]);
+  }, [map, setupTerrain]);
 
   return null;
 }
