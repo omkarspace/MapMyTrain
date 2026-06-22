@@ -16,6 +16,7 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const [schedule, setSchedule] = useState<ScheduleStop[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
+  const prevTrainRef = useRef<string | null>(null);
 
   useEffect(() => {
     const drawer = drawerRef.current;
@@ -40,6 +41,13 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
 
   useEffect(() => {
     if (!train) return;
+    
+    // Only show loading if train changed
+    if (prevTrainRef.current !== train.train_number) {
+      setScheduleLoading(true);
+      prevTrainRef.current = train.train_number;
+    }
+    
     let cancelled = false;
     const controller = new AbortController();
     fetch(`${API_BASE_URL}/api/v1/schedules/train/${train.train_number}`, {
