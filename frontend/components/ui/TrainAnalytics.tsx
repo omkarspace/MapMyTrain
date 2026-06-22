@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { TrendingUp, TrendingDown, Minus, Clock, Gauge } from "lucide-react";
 import { TrainPosition } from "@/lib/types";
 
@@ -16,21 +16,32 @@ interface VelocityData {
 }
 
 const calculateVelocity = (prev: VelocityData[]): number => {
-  if (prev.length === 0) return 0;
-  // Simplified velocity calculation (km/h estimate)
-  // In production, use Haversine formula for accurate distance
-  return Math.round(Math.random() * 60 + 80); // Mock: 80-140 km/h
+  if (prev.length < 2) return 0;
+  
+  const recent = prev.slice(-2);
+  const timeDiff = (recent[1].timestamp - recent[0].timestamp) / 1000; // seconds
+  
+  if (timeDiff <= 0) return 0;
+  
+  // Basic velocity estimate based on delay changes
+  // In production, use actual GPS coordinates with Haversine formula
+  const delayDiff = Math.abs(recent[1].delay - recent[0].delay);
+  const estimatedSpeed = Math.round(80 + (delayDiff * 2)); // Rough estimate
+  
+  return Math.min(Math.max(estimatedSpeed, 0), 200); // Clamp between 0-200 km/h
 };
 
 export function TrainAnalytics({ trainId, currentPosition }: TrainAnalyticsProps) {
   const [history, setHistory] = useState<VelocityData[]>([]);
-  const [prevTrainId, setPrevTrainId] = useState<number | null>(null);
+  const prevTrainIdRef = useRef<number | null>(null);
 
-  // Reset history if train changes (pure render-time state adjustment)
-  if (trainId !== prevTrainId) {
-    setPrevTrainId(trainId);
-    setHistory([]);
-  }
+  // Reset history if train changes
+  useEffect(() => {
+    if (prevTrainIdRef.current !== trainId) {
+      prevTrainIdRef.current = trainId;
+      setHistory([]);
+    }
+  }, [trainId]);
 
   // Update history in effect with setTimeout to avoid synchronous setState inside effect
   useEffect(() => {
