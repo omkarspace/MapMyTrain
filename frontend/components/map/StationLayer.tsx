@@ -305,7 +305,7 @@ export default function StationLayer() {
             `<div class="station-tooltip">
               <div class="station-code">${props.station_code}</div>
               <div class="station-name">${props.station_name}</div>
-              <div style="margin-top:4px; color:${isLight ? "#64748b" : "#64748b"}; font-size:10px;">
+              <div style="margin-top:4px; color:${isLight ? "#64748b" : "#94a3b8"}; font-size:10px;">
                 ${props.type.charAt(0).toUpperCase() + props.type.slice(1)} · ${props.platforms} platforms
               </div>
             </div>`
