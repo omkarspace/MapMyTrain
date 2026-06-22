@@ -5,6 +5,7 @@ import { X, Clock, MapPin, AlertTriangle, Train } from "lucide-react";
 import { Train as TrainType, ScheduleStop } from "@/lib/types";
 import { InterpolatedPosition } from "@/lib/interpolation";
 import { API_BASE_URL, getTrainTypeColor } from "@/lib/constants";
+import { ScheduleSkeleton } from "./Skeleton";
 
 interface TrainDrawerProps {
   train: TrainType | null;
@@ -14,6 +15,7 @@ interface TrainDrawerProps {
 
 export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [schedule, setSchedule] = useState<ScheduleStop[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const prevTrainRef = useRef<string | null>(null);
@@ -38,6 +40,46 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
       drawer.removeEventListener("touchmove", handleTouchMove);
     };
   }, []);
+
+  // Focus close button when drawer opens
+  useEffect(() => {
+    if (train && closeButtonRef.current) {
+      closeButtonRef.current.focus();
+    }
+  }, [train]);
+
+  // Trap focus within drawer
+  useEffect(() => {
+    if (!train) return;
+
+    const drawer = drawerRef.current;
+    if (!drawer) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+
+      const focusableElements = drawer.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement?.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement?.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [train]);
 
   useEffect(() => {
     if (!train) return;
@@ -92,6 +134,8 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
   return (
     <div
       ref={drawerRef}
+      role="dialog"
+      aria-label="Train details"
       className="absolute bottom-0 left-0 right-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 rounded-t-2xl shadow-2xl max-h-[70vh] overflow-hidden flex flex-col animate-slide-up-enter"
     >
       <div className="w-12 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-3" />
@@ -121,8 +165,10 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
             </div>
           </div>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Close train details"
           >
             <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
           </button>
@@ -197,32 +243,29 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
               <span>Day</span>
             </div>
             {scheduleLoading ? (
-              <div className="px-3 py-4 text-xs text-slate-400 dark:text-slate-500 text-center flex items-center justify-center gap-2">
-                <div className="w-3 h-3 border-2 border-slate-400 dark:border-slate-500 border-t-transparent rounded-full animate-spin" />
-                Loading schedule...
-              </div>
-            ) : schedule.length > 0 ? (
-              schedule.map((stop) => (
-                <div
-                  key={`${stop.station_code}-${stop.stop_sequence}`}
-                  className="grid grid-cols-4 gap-2 px-3 py-2 text-xs border-t border-slate-200 dark:border-slate-700/50"
-                >
-                  <div>
-                    <span className="text-slate-900 dark:text-slate-100">{stop.station_code}</span>
-                    <span className="text-slate-400 dark:text-slate-500 ml-1 hidden sm:inline">
-                      {stop.station_name}
-                    </span>
+                <ScheduleSkeleton />
+              ) : schedule.length > 0 ? (
+                schedule.map((stop) => (
+                  <div
+                    key={`${stop.station_code}-${stop.stop_sequence}`}
+                    className="grid grid-cols-4 gap-2 px-3 py-2 text-xs border-t border-slate-200 dark:border-slate-700/50"
+                  >
+                    <div>
+                      <span className="text-slate-900 dark:text-slate-100">{stop.station_code}</span>
+                      <span className="text-slate-400 dark:text-slate-500 ml-1 hidden sm:inline">
+                        {stop.station_name}
+                      </span>
+                    </div>
+                    <span className="text-slate-700 dark:text-slate-300">{stop.arrival || "--"}</span>
+                    <span className="text-slate-700 dark:text-slate-300">{stop.departure || "--"}</span>
+                    <span className="text-slate-500 dark:text-slate-400">D{stop.day}</span>
                   </div>
-                  <span className="text-slate-700 dark:text-slate-300">{stop.arrival || "--"}</span>
-                  <span className="text-slate-700 dark:text-slate-300">{stop.departure || "--"}</span>
-                  <span className="text-slate-500 dark:text-slate-400">D{stop.day}</span>
+                ))
+              ) : (
+                <div className="px-3 py-4 text-xs text-slate-400 dark:text-slate-500 text-center">
+                  No schedule data
                 </div>
-              ))
-            ) : (
-              <div className="px-3 py-4 text-xs text-slate-400 dark:text-slate-500 text-center">
-                No schedule data
-              </div>
-            )}
+              )}
           </div>
         </div>
 

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Wifi, WifiOff, RefreshCw } from "lucide-react";
+import { Wifi, WifiOff, RefreshCw, Loader2 } from "lucide-react";
 
 interface OfflineIndicatorProps {
+  isWebSocketConnected?: boolean;
   onRetry?: () => void;
 }
 
-export function OfflineIndicator({ onRetry }: OfflineIndicatorProps) {
+export function OfflineIndicator({ isWebSocketConnected = true, onRetry }: OfflineIndicatorProps) {
   const [isOnline, setIsOnline] = useState(true);
   const [lastSync, setLastSync] = useState<Date | null>(null);
 
@@ -37,7 +38,15 @@ export function OfflineIndicator({ onRetry }: OfflineIndicatorProps) {
     };
   }, []);
 
-  if (isOnline) {
+  const getStatus = () => {
+    if (!isOnline) return "offline";
+    if (!isWebSocketConnected) return "connecting";
+    return "connected";
+  };
+
+  const status = getStatus();
+
+  if (status === "connected") {
     return (
       <div className="absolute top-4 right-4 z-20 animate-fade-in">
         <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 backdrop-blur-sm border border-emerald-500/30 rounded-full transition-colors duration-300">
@@ -48,17 +57,29 @@ export function OfflineIndicator({ onRetry }: OfflineIndicatorProps) {
     );
   }
 
+  if (status === "connecting") {
+    return (
+      <div className="absolute top-4 right-4 z-20 animate-fade-in">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 backdrop-blur-sm border border-amber-500/30 rounded-full transition-colors duration-300">
+          <Loader2 className="w-3 h-3 text-amber-500 dark:text-amber-400 animate-spin" />
+          <span className="text-[10px] text-amber-500 dark:text-amber-400 font-medium">Connecting...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="absolute top-4 right-4 z-20 animate-fade-in">
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 backdrop-blur-sm border border-amber-500/30 rounded-full transition-colors duration-300">
-        <WifiOff className="w-3 h-3 text-amber-500 dark:text-amber-400" />
-        <span className="text-[10px] text-amber-500 dark:text-amber-400 font-medium">Offline</span>
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 backdrop-blur-sm border border-red-500/30 rounded-full transition-colors duration-300">
+        <WifiOff className="w-3 h-3 text-red-500 dark:text-red-400" />
+        <span className="text-[10px] text-red-500 dark:text-red-400 font-medium">Offline</span>
         {onRetry && (
           <button
             onClick={onRetry}
-            className="ml-1 p-0.5 hover:bg-amber-500/20 rounded transition-colors"
+            className="ml-1 p-0.5 hover:bg-red-500/20 rounded transition-colors"
+            aria-label="Reconnect"
           >
-            <RefreshCw className="w-3 h-3 text-amber-500 dark:text-amber-400" />
+            <RefreshCw className="w-3 h-3 text-red-500 dark:text-red-400" />
           </button>
         )}
       </div>

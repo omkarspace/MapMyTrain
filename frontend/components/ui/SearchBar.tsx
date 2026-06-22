@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, ArrowRight } from "lucide-react";
 import { Train } from "@/lib/types";
 import { API_BASE_URL, getTrainTypeColor } from "@/lib/constants";
+import { TrainCardSkeleton } from "./Skeleton";
+import { useToast } from "./Toast";
 
 interface SearchBarProps {
   onTrainSelect: (train: Train) => void;
@@ -22,9 +24,16 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const [searchMode, setSearchMode] = useState<"train" | "route">("train");
   const [isLoading, setIsLoading] = useState(false);
+  const [sourceError, setSourceError] = useState("");
+  const [destError, setDestError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const { toast } = useToast();
+
+  const validateStationCode = (code: string): boolean => {
+    return code.length >= 2 && code.length <= 5;
+  };
 
   const searchTrains = useCallback(
     async (q: string) => {
@@ -113,14 +122,17 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
     onTrainSelect(train);
     setQuery("");
     setIsOpen(false);
+    toast(`Tracking ${train.train_name} (${train.train_number})`, "success");
   };
 
   return (
     <div className="absolute top-4 left-4 right-4 z-20 max-w-lg animate-slide-down-enter">
       <div className="relative">
-        <div className="flex gap-2 mb-2">
+        <div className="flex gap-2 mb-2" role="tablist" aria-label="Search mode">
           <button
             onClick={() => setSearchMode("train")}
+            role="tab"
+            aria-selected={searchMode === "train"}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               searchMode === "train"
                 ? "bg-blue-500 text-white"
@@ -131,6 +143,8 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
           </button>
           <button
             onClick={() => setSearchMode("route")}
+            role="tab"
+            aria-selected={searchMode === "route"}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               searchMode === "route"
                 ? "bg-blue-500 text-white"
@@ -142,30 +156,76 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
         </div>
 
         {searchMode === "route" && (
-          <div className="flex gap-2 mb-2">
-            <input
-              type="text"
-              placeholder="From (e.g., NDLS)"
-              value={sourceStation}
-              onChange={(e) => setSourceStation(e.target.value.toUpperCase())}
-              className="flex-1 px-3 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm uppercase"
-              maxLength={5}
-            />
-            <ArrowRight className="w-5 h-5 text-slate-400 self-center" />
-            <input
-              type="text"
-              placeholder="To (e.g., HWH)"
-              value={destStation}
-              onChange={(e) => setDestStation(e.target.value.toUpperCase())}
-              className="flex-1 px-3 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm uppercase"
-              maxLength={5}
-            />
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-2 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            />
+          <div className="mb-2">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="From (e.g., NDLS)"
+                  value={sourceStation}
+                  onChange={(e) => {
+                    const val = e.target.value.toUpperCase();
+                    setSourceStation(val);
+                    setSourceError(val && !validateStationCode(val) ? "2-5 characters" : "");
+                  }}
+                  onBlur={() => {
+                    if (sourceStation && !validateStationCode(sourceStation)) {
+                      setSourceError("2-5 characters required");
+                    }
+                  }}
+                  className={`w-full px-3 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm uppercase ${
+                    sourceError
+                      ? "border-red-500 dark:border-red-500"
+                      : "border-slate-300 dark:border-slate-700"
+                  }`}
+                  maxLength={5}
+                  aria-invalid={!!sourceError}
+                  aria-describedby={sourceError ? "source-error" : undefined}
+                />
+                {sourceError && (
+                  <p id="source-error" className="text-xs text-red-500 mt-1">
+                    {sourceError}
+                  </p>
+                )}
+              </div>
+              <ArrowRight className="w-5 h-5 text-slate-400 self-center" />
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="To (e.g., HWH)"
+                  value={destStation}
+                  onChange={(e) => {
+                    const val = e.target.value.toUpperCase();
+                    setDestStation(val);
+                    setDestError(val && !validateStationCode(val) ? "2-5 characters" : "");
+                  }}
+                  onBlur={() => {
+                    if (destStation && !validateStationCode(destStation)) {
+                      setDestError("2-5 characters required");
+                    }
+                  }}
+                  className={`w-full px-3 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm uppercase ${
+                    destError
+                      ? "border-red-500 dark:border-red-500"
+                      : "border-slate-300 dark:border-slate-700"
+                  }`}
+                  maxLength={5}
+                  aria-invalid={!!destError}
+                  aria-describedby={destError ? "dest-error" : undefined}
+                />
+                {destError && (
+                  <p id="dest-error" className="text-xs text-red-500 mt-1">
+                    {destError}
+                  </p>
+                )}
+              </div>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-2 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            </div>
           </div>
         )}
 
@@ -193,16 +253,42 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
             }}
             onFocus={() => setIsOpen(true)}
             onKeyDown={handleKeyDown}
+            aria-label={
+              searchMode === "train"
+                ? "Search trains by number or name"
+                : "Search trains by route"
+            }
+            aria-autocomplete="list"
             className="w-full pl-10 pr-4 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
           />
-          {isOpen && suggestions.length > 0 && (
+          {isOpen && (isLoading || suggestions.length > 0 || query.length > 0) && (
             <div
               ref={dropdownRef}
+              role="listbox"
+              aria-label="Search results"
               className="absolute top-full mt-1 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-xl max-h-80 overflow-y-auto animate-fade-scale-in"
             >
-              {suggestions.map((train, index) => (
+              {isLoading ? (
+                <div className="p-2 space-y-2">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <TrainCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : suggestions.length === 0 ? (
+                <div className="p-4 text-center">
+                  <Search className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    No trains found for &ldquo;{query}&rdquo;
+                  </p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                    Try searching by train number or name
+                  </p>
+                </div>
+              ) : suggestions.map((train, index) => (
                 <button
                   key={train.train_number}
+                  role="option"
+                  aria-selected={index === highlightIndex}
                   onClick={() => handleSelect(train)}
                   className={`w-full px-4 py-3 text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
                     index === highlightIndex ? "bg-slate-100 dark:bg-slate-800" : ""

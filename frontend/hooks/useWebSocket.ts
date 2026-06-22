@@ -69,10 +69,118 @@ function createWorker(): { worker: Worker; revoke: () => void } | null {
 
 export function useWebSocket() {
   const [positions, setPositions] = useState<Map<number, InterpolatedPosition>>(new Map());
+  const [isConnected, setIsConnected] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const animFrameRef = useRef<number>(0);
   const latestPositionsRef = useRef<Map<number, { trainId: number; lng: number; lat: number; bearing: number; delay: number }>>(new Map());
   const flushRef = useRef<(() => void) | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+  const maxReconnectAttempts = 5;
+
+  const connect = () => {
+    if (USE_MOCK_TELEMETRY) {
+      loadMockTrains().then((mockPositions) => {
+        for (const [trainId, pos] of mockPositions) {
+          updateTrainTarget(trainId, {
+            train_id: trainId,
+            longitude: pos.longitude,
+            latitude: pos.latitude,
+            bearing: pos.bearing,
+            delay: pos.delay,
+          });
+        }
+        setPositions(getAllInterpolatedPositions());
+        setIsConnected(true);
+      });
+      return;
+    }
+
+    const result = createWorker();
+
+    if (result) {
+      const { worker, revoke } = result;
+      workerRef.current = worker;
+
+      worker.onmessage = (e) => {
+        if (e.data.type === "position") {
+          latestPositionsRef.current.set(e.data.data.trainId, e.data.data);
+        } else if (e.data.type === "connected") {
+          setIsConnected(true);
+          reconnectAttemptsRef.current = 0;
+        } else if (e.data.type === "disconnected" || e.data.type === "error") {
+          setIsConnected(false);
+          attemptReconnect();
+        }
+      };
+
+      worker.postMessage({ type: "connect", url: WS_URL });
+
+      return () => {
+        worker.postMessage({ type: "disconnect" });
+        worker.terminate();
+        revoke();
+      };
+    }
+
+    // Fallback: direct WebSocket if worker creation fails
+    const ws = new WebSocket(WS_URL);
+    ws.binaryType = "arraybuffer";
+
+    ws.onopen = () => {
+      setIsConnected(true);
+      reconnectAttemptsRef.current = 0;
+    };
+
+    ws.onclose = () => {
+      setIsConnected(false);
+      attemptReconnect();
+    };
+
+    ws.onerror = () => {
+      setIsConnected(false);
+    };
+
+    ws.onmessage = (event) => {
+      if (event.data instanceof ArrayBuffer) {
+        const view = new DataView(event.data);
+        if (event.data.byteLength >= TRAIN_POSITION_SIZE) {
+          const trainId = view.getInt32(0);
+          const lng = view.getFloat32(4);
+          const lat = view.getFloat32(8);
+          const bearing = view.getInt16(12);
+          const delay = view.getInt16(14);
+
+          latestPositionsRef.current.set(trainId, { trainId, lng, lat, bearing, delay });
+        }
+      }
+    };
+
+    return () => {
+      ws.close();
+    };
+  };
+
+  const attemptReconnect = () => {
+    if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+      return;
+    }
+
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
+    reconnectAttemptsRef.current += 1;
+
+    reconnectTimeoutRef.current = setTimeout(() => {
+      connect();
+    }, delay);
+  };
+
+  const reconnect = () => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+    reconnectAttemptsRef.current = 0;
+    connect();
+  };
 
   useEffect(() => {
     const flushUpdates = () => {
@@ -94,75 +202,21 @@ export function useWebSocket() {
     };
 
     flushRef.current = flushUpdates;
-
-    if (USE_MOCK_TELEMETRY) {
-      loadMockTrains().then((mockPositions) => {
-        for (const [trainId, pos] of mockPositions) {
-          updateTrainTarget(trainId, {
-            train_id: trainId,
-            longitude: pos.longitude,
-            latitude: pos.latitude,
-            bearing: pos.bearing,
-            delay: pos.delay,
-          });
-        }
-        setPositions(getAllInterpolatedPositions());
-      });
-      animFrameRef.current = requestAnimationFrame(flushUpdates);
-      return () => {
-        cancelAnimationFrame(animFrameRef.current);
-      };
-    }
-
-    const result = createWorker();
-
-    if (result) {
-      const { worker, revoke } = result;
-      workerRef.current = worker;
-
-      worker.onmessage = (e) => {
-        if (e.data.type === "position") {
-          latestPositionsRef.current.set(e.data.data.trainId, e.data.data);
-        }
-      };
-
-      worker.postMessage({ type: "connect", url: WS_URL });
-      animFrameRef.current = requestAnimationFrame(flushUpdates);
-
-      return () => {
-        worker.postMessage({ type: "disconnect" });
-        worker.terminate();
-        revoke();
-        cancelAnimationFrame(animFrameRef.current);
-      };
-    }
-
-    // Fallback: direct WebSocket if worker creation fails
-    const ws = new WebSocket(WS_URL);
-    ws.binaryType = "arraybuffer";
-
-    ws.onmessage = (event) => {
-      if (event.data instanceof ArrayBuffer) {
-        const view = new DataView(event.data);
-        if (event.data.byteLength >= TRAIN_POSITION_SIZE) {
-          const trainId = view.getInt32(0);
-          const lng = view.getFloat32(4);
-          const lat = view.getFloat32(8);
-          const bearing = view.getInt16(12);
-          const delay = view.getInt16(14);
-
-          latestPositionsRef.current.set(trainId, { trainId, lng, lat, bearing, delay });
-        }
-      }
-    };
-
     animFrameRef.current = requestAnimationFrame(flushUpdates);
 
-    return () => {
-      ws.close();
-      cancelAnimationFrame(animFrameRef.current);
-    };
-  }, []);
+    connect();
 
-  return { positions };
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      cancelAnimationFrame(animFrameRef.current);
+      if (workerRef.current) {
+        workerRef.current.postMessage({ type: "disconnect" });
+        workerRef.current.terminate();
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return { positions, isConnected, reconnect };
 }
