@@ -41,8 +41,8 @@ export function OfflineIndicator({ onRetry }: OfflineIndicatorProps) {
     return (
       <div className="absolute top-4 right-4 z-20 animate-fade-in">
         <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 backdrop-blur-sm border border-emerald-500/30 rounded-full transition-colors duration-300">
-          <Wifi className="w-3 h-3 text-emerald-400" />
-          <span className="text-[10px] text-emerald-400 font-medium">Live</span>
+          <Wifi className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
+          <span className="text-[10px] text-emerald-500 dark:text-emerald-400 font-medium">Live</span>
         </div>
       </div>
     );
@@ -51,19 +51,19 @@ export function OfflineIndicator({ onRetry }: OfflineIndicatorProps) {
   return (
     <div className="absolute top-4 right-4 z-20 animate-fade-in">
       <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 backdrop-blur-sm border border-amber-500/30 rounded-full transition-colors duration-300">
-        <WifiOff className="w-3 h-3 text-amber-400" />
-        <span className="text-[10px] text-amber-400 font-medium">Offline</span>
+        <WifiOff className="w-3 h-3 text-amber-500 dark:text-amber-400" />
+        <span className="text-[10px] text-amber-500 dark:text-amber-400 font-medium">Offline</span>
         {onRetry && (
           <button
             onClick={onRetry}
             className="ml-1 p-0.5 hover:bg-amber-500/20 rounded transition-colors"
           >
-            <RefreshCw className="w-3 h-3 text-amber-400" />
+            <RefreshCw className="w-3 h-3 text-amber-500 dark:text-amber-400" />
           </button>
         )}
       </div>
       {lastSync && (
-        <p className="text-[8px] text-slate-500 mt-1 text-right">
+        <p className="text-[8px] text-slate-400 dark:text-slate-500 mt-1 text-right">
           Last sync: {lastSync.toLocaleTimeString()}
         </p>
       )}

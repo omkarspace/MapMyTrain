@@ -10,6 +10,7 @@ export const MAP_BEARING = -15;
 export const MAP_MAX_PITCH = 70;
 
 export const DARK_MAP_STYLE = "https://tiles.openfreemap.org/styles/dark";
+export const LIGHT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
 export const STATION_COLOR = "#f59e0b";
 export const STATION_COLOR_GLOW = "#fbbf24";

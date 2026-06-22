@@ -10,8 +10,10 @@ import {
   MAP_BEARING,
   MAP_MAX_PITCH,
   DARK_MAP_STYLE,
+  LIGHT_MAP_STYLE,
 } from "@/lib/constants";
 import { useMap } from "./MapContext";
+import { useTheme } from "@/providers/ThemeProvider";
 
 function springLerp(current: number, target: number, stiffness: number, damping: number): number {
   const diff = target - current;
@@ -24,15 +26,18 @@ export default function MapCanvas() {
   const { setMap } = useMap();
   const mapRef = useRef<maplibregl.Map | null>(null);
   const isAnimatingRef = useRef(false);
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    const mapStyle = theme === "dark" ? DARK_MAP_STYLE : LIGHT_MAP_STYLE;
+
     const map = new maplibregl.Map({
       container: mapContainer.current,
-      style: DARK_MAP_STYLE,
+      style: mapStyle,
       center: MAP_CENTER,
       zoom: MAP_ZOOM,
       pitch: MAP_PITCH,
@@ -125,7 +130,14 @@ export default function MapCanvas() {
       mapRef.current = null;
       setMap(null);
     };
-  }, [setMap]);
+  }, [setMap, theme]);
+
+  useEffect(() => {
+    if (mapRef.current) {
+      const mapStyle = theme === "dark" ? DARK_MAP_STYLE : LIGHT_MAP_STYLE;
+      mapRef.current.setStyle(mapStyle);
+    }
+  }, [theme]);
 
   return (
     <div

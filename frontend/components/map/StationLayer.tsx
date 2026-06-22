@@ -3,6 +3,7 @@
 import { useEffect, useRef, useMemo } from "react";
 import maplibregl from "maplibre-gl";
 import { useMap } from "./MapContext";
+import { useTheme } from "@/providers/ThemeProvider";
 import { useViewportStations, ViewportStation } from "@/hooks/useViewportStations";
 import { getCurrentIST } from "@/lib/lighting";
 import { MAJOR_STATION_POINTS } from "@/lib/stationData";
@@ -18,6 +19,10 @@ const NIGHT_STATION_GLOW = "#fbbf24";
 const NIGHT_LABEL_COLOR = "#fde68a";
 const NIGHT_LABEL_HALO = "rgba(15, 23, 42, 0.9)";
 const NIGHT_UPDATE_MS = 60_000;
+
+const LIGHT_STATION_GLOW = "#d97706";
+const LIGHT_LABEL_COLOR = "#92400e";
+const LIGHT_LABEL_HALO = "rgba(255, 255, 255, 0.9)";
 
 function stationsToGeoJSON(stations: ViewportStation[]) {
   const points: GeoJSON.Feature[] = [];
@@ -73,6 +78,7 @@ function stationsToGeoJSON(stations: ViewportStation[]) {
 
 export default function StationLayer() {
   const { map } = useMap();
+  const { theme } = useTheme();
   const viewportStations = useViewportStations();
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const layersAddedRef = useRef(false);
@@ -94,6 +100,11 @@ export default function StationLayer() {
 
     const addLayers = () => {
       if (layersAddedRef.current) return;
+
+      const isLight = theme === "light";
+      const labelColor = isLight ? LIGHT_LABEL_COLOR : "#fbbf24";
+      const labelHalo = isLight ? LIGHT_LABEL_HALO : "rgba(15, 23, 42, 0.9)";
+      const glowColor = isLight ? LIGHT_STATION_GLOW : STATION_COLOR_GLOW;
 
       map.addSource("major-stations", {
         type: "geojson",
@@ -123,7 +134,7 @@ export default function StationLayer() {
             4, 6,
             6, 10,
           ],
-          "circle-color": STATION_COLOR_GLOW,
+          "circle-color": glowColor,
           "circle-opacity": [
             "interpolate",
             ["linear"],
@@ -132,7 +143,7 @@ export default function StationLayer() {
             4, 0.6,
             6, 0.8,
           ],
-          "circle-blur": 0.6,
+          "circle-blur": isLight ? 0.4 : 0.6,
         },
       });
 
@@ -156,9 +167,9 @@ export default function StationLayer() {
           "text-allow-overlap": true,
         },
         paint: {
-          "text-color": "#fbbf24",
-          "text-halo-color": "rgba(15, 23, 42, 0.9)",
-          "text-halo-width": 1.5,
+          "text-color": labelColor,
+          "text-halo-color": labelHalo,
+          "text-halo-width": isLight ? 2 : 1.5,
           "text-opacity": [
             "interpolate",
             ["linear"],
@@ -184,7 +195,7 @@ export default function StationLayer() {
             14, 14,
             18, 20,
           ],
-          "circle-color": STATION_COLOR_GLOW,
+          "circle-color": glowColor,
           "circle-opacity": [
             "interpolate",
             ["linear"],
@@ -194,7 +205,7 @@ export default function StationLayer() {
             12, 0.7,
             16, 0.5,
           ],
-          "circle-blur": 0.8,
+          "circle-blur": isLight ? 0.5 : 0.8,
         },
       });
 
@@ -252,9 +263,9 @@ export default function StationLayer() {
           "text-anchor": "top",
         },
         paint: {
-          "text-color": "#fbbf24",
-          "text-halo-color": "rgba(15, 23, 42, 0.8)",
-          "text-halo-width": 1.5,
+          "text-color": labelColor,
+          "text-halo-color": labelHalo,
+          "text-halo-width": isLight ? 2 : 1.5,
           "text-opacity": [
             "interpolate",
             ["linear"],
@@ -294,7 +305,7 @@ export default function StationLayer() {
             `<div class="station-tooltip">
               <div class="station-code">${props.station_code}</div>
               <div class="station-name">${props.station_name}</div>
-              <div style="margin-top:4px; color:#64748b; font-size:10px;">
+              <div style="margin-top:4px; color:${isLight ? "#64748b" : "#64748b"}; font-size:10px;">
                 ${props.type.charAt(0).toUpperCase() + props.type.slice(1)} · ${props.platforms} platforms
               </div>
             </div>`
@@ -321,6 +332,8 @@ export default function StationLayer() {
       });
 
       const updateNightGlow = () => {
+        if (theme === "light") return;
+
         const { phase } = getCurrentIST();
         if (phase === lastPhaseRef.current) return;
         lastPhaseRef.current = phase;
@@ -403,7 +416,7 @@ export default function StationLayer() {
       layersAddedRef.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, majorStationsGeojson]);
+  }, [map, majorStationsGeojson, theme]);
 
   useEffect(() => {
     if (!map || !layersAddedRef.current) return;

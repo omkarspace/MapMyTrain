@@ -11,6 +11,7 @@ import Train3DLayer from "@/components/map/Train3DLayer";
 import TerrainLayer from "@/components/map/TerrainLayer";
 import MapViewController from "@/components/MapViewController";
 import TerrainToggle from "@/components/ui/TerrainToggle";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import WebSocketProvider from "@/providers/WebSocketProvider";
 
 const jsonLd = {
@@ -60,6 +61,7 @@ function MapLayers() {
       <TerrainLayer enabled={terrainEnabled} />
       <MapViewController />
       <TerrainToggle />
+      <ThemeToggle />
       <div className="vignette-overlay" />
     </>
   );
@@ -67,7 +69,7 @@ function MapLayers() {
 
 export default function Home() {
   return (
-    <main className="relative w-full h-screen bg-slate-950">
+    <main className="relative w-full h-screen bg-white dark:bg-slate-950">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

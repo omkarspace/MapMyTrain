@@ -2,10 +2,22 @@
 
 import { useEffect } from "react";
 import { useMap } from "./MapContext";
-import { BUILDING_MINZOOM, BUILDING_COLOR_BASE, BUILDING_COLOR_HIGHLIGHT } from "@/lib/constants";
+import { useTheme } from "@/providers/ThemeProvider";
+import { BUILDING_MINZOOM } from "@/lib/constants";
+
+const DARK_BUILDING_BASE = "#1a1a2e";
+const DARK_BUILDING_HIGHLIGHT = "#2d2d44";
+const DARK_BUILDING_PEAK = "#3d3d5c";
+const DARK_BUILDING_GLOW = "#6366f1";
+
+const LIGHT_BUILDING_BASE = "#d1d5db";
+const LIGHT_BUILDING_HIGHLIGHT = "#9ca3af";
+const LIGHT_BUILDING_PEAK = "#6b7280";
+const LIGHT_BUILDING_GLOW = "#818cf8";
 
 export default function BuildingLayer() {
   const { map } = useMap();
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (!map) return;
@@ -32,6 +44,12 @@ export default function BuildingLayer() {
 
       if (!sourceUrl) return;
 
+      const isLight = theme === "light";
+      const buildingBase = isLight ? LIGHT_BUILDING_BASE : DARK_BUILDING_BASE;
+      const buildingHighlight = isLight ? LIGHT_BUILDING_HIGHLIGHT : DARK_BUILDING_HIGHLIGHT;
+      const buildingPeak = isLight ? LIGHT_BUILDING_PEAK : DARK_BUILDING_PEAK;
+      const buildingGlow = isLight ? LIGHT_BUILDING_GLOW : DARK_BUILDING_GLOW;
+
       map.addSource("buildings-src", {
         type: "vector",
         url: sourceUrl,
@@ -50,11 +68,11 @@ export default function BuildingLayer() {
               ["linear"],
               ["get", "render_height"],
               0,
-              BUILDING_COLOR_BASE,
+              buildingBase,
               30,
-              BUILDING_COLOR_HIGHLIGHT,
+              buildingHighlight,
               80,
-              "#3d3d5c",
+              buildingPeak,
             ],
             "fill-extrusion-height": [
               "interpolate",
@@ -73,9 +91,9 @@ export default function BuildingLayer() {
               BUILDING_MINZOOM,
               0,
               BUILDING_MINZOOM + 1,
-              0.7,
+              isLight ? 0.6 : 0.7,
               18,
-              0.85,
+              isLight ? 0.75 : 0.85,
             ],
           },
         },
@@ -90,7 +108,7 @@ export default function BuildingLayer() {
           "source-layer": "building",
           minzoom: BUILDING_MINZOOM,
           paint: {
-            "fill-extrusion-color": "#6366f1",
+            "fill-extrusion-color": buildingGlow,
             "fill-extrusion-height": [
               "interpolate",
               ["linear"],
@@ -112,9 +130,9 @@ export default function BuildingLayer() {
               BUILDING_MINZOOM,
               0,
               BUILDING_MINZOOM + 1,
-              0.15,
+              isLight ? 0.1 : 0.15,
               18,
-              0.25,
+              isLight ? 0.2 : 0.25,
             ],
           },
         },
@@ -138,7 +156,7 @@ export default function BuildingLayer() {
     return () => {
       map.off("styledata", handleStyleData);
     };
-  }, [map]);
+  }, [map, theme]);
 
   return null;
 }

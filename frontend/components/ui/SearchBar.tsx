@@ -118,7 +118,7 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               searchMode === "train"
                 ? "bg-blue-500 text-white"
-                : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
             }`}
           >
             By Train
@@ -128,7 +128,7 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               searchMode === "route"
                 ? "bg-blue-500 text-white"
-                : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
             }`}
           >
             By Route
@@ -142,7 +142,7 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
               placeholder="From (e.g., NDLS)"
               value={sourceStation}
               onChange={(e) => setSourceStation(e.target.value.toUpperCase())}
-              className="flex-1 px-3 py-2 bg-slate-900/90 backdrop-blur-sm border border-slate-700 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm uppercase"
+              className="flex-1 px-3 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm uppercase"
               maxLength={5}
             />
             <ArrowRight className="w-5 h-5 text-slate-400 self-center" />
@@ -151,14 +151,14 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
               placeholder="To (e.g., HWH)"
               value={destStation}
               onChange={(e) => setDestStation(e.target.value.toUpperCase())}
-              className="flex-1 px-3 py-2 bg-slate-900/90 backdrop-blur-sm border border-slate-700 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm uppercase"
+              className="flex-1 px-3 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm uppercase"
               maxLength={5}
             />
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-2 py-2 bg-slate-900/90 backdrop-blur-sm border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="px-2 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
           </div>
         )}
@@ -183,30 +183,30 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
             }}
             onFocus={() => setIsOpen(true)}
             onKeyDown={handleKeyDown}
-            className="w-full pl-10 pr-4 py-3 bg-slate-900/90 backdrop-blur-sm border border-slate-700 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full pl-10 pr-4 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
           />
           {isOpen && suggestions.length > 0 && (
             <div
               ref={dropdownRef}
-              className="absolute top-full mt-1 w-full bg-slate-900/95 backdrop-blur-sm border border-slate-700 rounded-lg overflow-hidden shadow-xl max-h-80 overflow-y-auto animate-fade-scale-in"
+              className="absolute top-full mt-1 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-xl max-h-80 overflow-y-auto animate-fade-scale-in"
             >
               {suggestions.map((train, index) => (
                 <button
                   key={train.train_number}
                   onClick={() => handleSelect(train)}
-                  className={`w-full px-4 py-3 text-left hover:bg-slate-800 transition-colors ${
-                    index === highlightIndex ? "bg-slate-800" : ""
+                  className={`w-full px-4 py-3 text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
+                    index === highlightIndex ? "bg-slate-100 dark:bg-slate-800" : ""
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <span className="text-blue-400 text-xs font-mono font-bold">
+                      <span className="text-blue-500 dark:text-blue-400 text-xs font-mono font-bold">
                         {train.train_number.slice(0, 3)}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-slate-100 truncate">
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
                           {train.train_name}
                         </p>
                         {train.train_type && (
@@ -221,15 +221,15 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         {train.train_number} • {train.source_station_code} →{" "}
                         {train.destination_station_code}
                         {train.distance_km ? ` • ${train.distance_km} km` : ""}
                       </p>
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-slate-400 dark:text-slate-500">
                       {train.average_delay != null && train.average_delay > 0 && (
-                        <span className="text-amber-400">
+                        <span className="text-amber-500 dark:text-amber-400">
                           +{train.average_delay}m
                         </span>
                       )}
