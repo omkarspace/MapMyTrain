@@ -10,3 +10,6 @@ __pycache__/
 /docs/
 /document/
 /data_train/
+
+# Test results
+frontend/test-results/
