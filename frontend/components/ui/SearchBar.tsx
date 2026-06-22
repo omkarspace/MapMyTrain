@@ -21,6 +21,7 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const [searchMode, setSearchMode] = useState<"train" | "route">("train");
+  const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -29,6 +30,7 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
     async (q: string) => {
       if (!q.trim()) {
         setSuggestions([]);
+        setIsLoading(false);
         return;
       }
 
@@ -39,12 +41,14 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
             t.destination_station_code?.toUpperCase() === destStation.toUpperCase()
         );
         setSuggestions(filtered.slice(0, 10));
+        setIsLoading(false);
         return;
       }
 
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
+      setIsLoading(true);
 
       try {
         const res = await fetch(
@@ -61,6 +65,8 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
             t.train_name.toLowerCase().includes(lower)
         );
         setSuggestions(filtered.slice(0, 10));
+      } finally {
+        setIsLoading(false);
       }
     },
     [trains, searchMode, sourceStation, destStation]
@@ -165,7 +171,11 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
 
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-slate-400" />
+            {isLoading ? (
+              <div className="h-5 w-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Search className="h-5 w-5 text-slate-400" />
+            )}
           </div>
           <input
             ref={inputRef}
