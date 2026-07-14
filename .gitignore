@@ -13,3 +13,28 @@ __pycache__/
 
 # Test results
 frontend/test-results/
+
+.venv/
+
+# Python
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Next.js
+.next/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
