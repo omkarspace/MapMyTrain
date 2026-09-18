@@ -40,17 +40,27 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
 
       return (
-        <div className="flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-          <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+        <div
+          className="flex flex-col items-center justify-center p-8 rounded-xl"
+          style={{
+            backgroundColor: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
+          }}
+        >
+          <AlertTriangle className="w-12 h-12 mb-4" style={{ color: "var(--color-warning)" }} />
+          <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>
             Something went wrong
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-4 max-w-md">
+          <p className="text-sm text-center mb-4 max-w-md" style={{ color: "var(--color-text-secondary)" }}>
             {this.state.error?.message || "An unexpected error occurred"}
           </p>
           <button
             onClick={this.handleReset}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-md transition-colors duration-150"
+            style={{
+              backgroundColor: "var(--color-accent)",
+              color: "#fff",
+            }}
           >
             <RefreshCw className="w-4 h-4" />
             Try Again

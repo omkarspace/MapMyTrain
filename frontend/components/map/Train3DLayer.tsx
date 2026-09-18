@@ -413,7 +413,7 @@ export default function Train3DLayer() {
         const consist: TrainConsist = createTrainConsist({ type: trainType, coachCount });
 
         const simplifiedLoco = createTrainGeometry({
-          variant: trainType === "rajdhani" ? "rajdhani" : "普通",
+          variant: trainType === "rajdhani" ? "rajdhani" : "passenger",
           scale: 0.8,
         });
 

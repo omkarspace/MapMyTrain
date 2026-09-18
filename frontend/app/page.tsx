@@ -103,7 +103,7 @@ function MapLayers() {
 
 export default function Home() {
   return (
-    <main className="relative w-full h-screen bg-white dark:bg-slate-950">
+    <main className="relative w-full h-screen" style={{ backgroundColor: "var(--color-bg)" }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -113,17 +113,18 @@ export default function Home() {
           <TerrainProvider>
             <ErrorBoundary
               fallback={
-                <div className="flex flex-col items-center justify-center h-full bg-slate-50 dark:bg-slate-950">
-                  <AlertTriangle className="w-16 h-16 text-amber-500 mb-4" />
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                <div className="flex flex-col items-center justify-center h-full" style={{ backgroundColor: "var(--color-bg)" }}>
+                  <AlertTriangle className="w-16 h-16 mb-4" style={{ color: "var(--color-warning)" }} />
+                  <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--color-text-primary)" }}>
                     Map Loading Error
                   </h1>
-                  <p className="text-slate-500 dark:text-slate-400 mb-4">
+                  <p className="mb-4" style={{ color: "var(--color-text-secondary)" }}>
                     Failed to load the map. Please refresh the page.
                   </p>
                   <button
                     onClick={() => window.location.reload()}
-                    className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    className="px-6 py-3 rounded-md transition-colors"
+                    style={{ backgroundColor: "var(--color-accent)", color: "#fff" }}
                   >
                     Refresh Page
                   </button>

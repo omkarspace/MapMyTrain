@@ -8,13 +8,24 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-xl"
+      className="fixed bottom-6 right-6 z-50 flex items-center justify-center transition-all duration-200 hover:scale-105 outline-none"
+      style={{
+        width: "40px",
+        height: "40px",
+        borderRadius: "var(--radius-md)",
+        backgroundColor: "var(--color-surface)",
+        border: "1px solid var(--color-border)",
+        boxShadow: "var(--shadow-md)",
+      }}
+      onFocus={(e) => e.currentTarget.style.boxShadow = "0 0 0 2px var(--color-accent-subtle)"}
+      onBlur={(e) => e.currentTarget.style.boxShadow = "var(--shadow-md)"}
       title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
       aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
     >
       {theme === "dark" ? (
         <svg
-          className="w-5 h-5 text-amber-400"
+          className="w-4 h-4"
+          style={{ color: "var(--color-warning)" }}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -28,7 +39,8 @@ export default function ThemeToggle() {
         </svg>
       ) : (
         <svg
-          className="w-5 h-5 text-slate-700"
+          className="w-4 h-4"
+          style={{ color: "var(--color-text-secondary)" }}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

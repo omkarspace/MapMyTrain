@@ -1,13 +1,24 @@
 export default function StatusBar() {
   return (
-    <div className="absolute bottom-2 right-2 z-50 flex items-center gap-3 animate-fade-in">
-      <div className="text-[10px] text-slate-500 dark:text-slate-400 bg-white/60 dark:bg-slate-950/60 px-2 py-0.5 rounded backdrop-blur-sm">
+    <div
+      className="absolute bottom-2 right-2 z-50 flex items-center gap-3"
+      style={{ animation: "fadeIn 0.3s ease-out" }}
+    >
+      <div
+        className="text-[10px] px-2 py-0.5 rounded"
+        style={{
+          color: "var(--color-text-tertiary)",
+          backgroundColor: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+        }}
+      >
         ©{" "}
         <a
           href="https://www.openstreetmap.org/copyright"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:underline text-sky-500 dark:text-sky-400"
+          style={{ color: "var(--color-accent)" }}
+          className="hover:underline"
         >
           OpenStreetMap
         </a>{" "}

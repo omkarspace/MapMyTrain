@@ -2,7 +2,6 @@
 
 import { useState, useEffect, createContext, useContext, useCallback } from "react";
 import { X, CheckCircle, AlertTriangle, Info, AlertCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 type ToastType = "success" | "error" | "warning" | "info";
 
@@ -64,36 +63,42 @@ function ToastItem({
     return () => clearTimeout(timer);
   }, [toast.id, onRemove]);
 
-  const icons = {
-    success: <CheckCircle className="w-4 h-4 text-emerald-500" />,
-    error: <AlertCircle className="w-4 h-4 text-red-500" />,
-    warning: <AlertTriangle className="w-4 h-4 text-amber-500" />,
-    info: <Info className="w-4 h-4 text-blue-500" />,
+  const icons: Record<ToastType, React.ReactNode> = {
+    success: <CheckCircle className="w-4 h-4" style={{ color: "var(--color-success)" }} />,
+    error: <AlertCircle className="w-4 h-4" style={{ color: "var(--color-error)" }} />,
+    warning: <AlertTriangle className="w-4 h-4" style={{ color: "var(--color-warning)" }} />,
+    info: <Info className="w-4 h-4" style={{ color: "var(--color-accent)" }} />,
   };
 
-  const borderColors = {
-    success: "border-emerald-500/50",
-    error: "border-red-500/50",
-    warning: "border-amber-500/50",
-    info: "border-blue-500/50",
+  const borderAccent: Record<ToastType, string> = {
+    success: "var(--color-success)",
+    error: "var(--color-error)",
+    warning: "var(--color-warning)",
+    info: "var(--color-accent)",
   };
 
   return (
     <div
-      className={cn(
-        "flex items-center gap-3 p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border rounded-lg shadow-lg animate-slide-down-enter",
-        borderColors[toast.type]
-      )}
+      className="flex items-center gap-3 p-3 rounded-lg"
+      style={{
+        backgroundColor: "var(--color-surface)",
+        border: "1px solid var(--color-border)",
+        borderLeft: `3px solid ${borderAccent[toast.type]}`,
+        boxShadow: "var(--shadow-lg)",
+      }}
     >
       {icons[toast.type]}
-      <p className="text-sm text-slate-700 dark:text-slate-300 flex-1">
+      <p className="text-sm flex-1" style={{ color: "var(--color-text-primary)" }}>
         {toast.message}
       </p>
       <button
         onClick={() => onRemove(toast.id)}
-        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+        className="p-1 rounded transition-colors duration-150 outline-none"
+        style={{ color: "var(--color-text-tertiary)" }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--color-surface-alt)"}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
       >
-        <X className="w-3 h-3 text-slate-400" />
+        <X className="w-3 h-3" />
       </button>
     </div>
   );

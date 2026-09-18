@@ -295,6 +295,13 @@ export default function StationLayer() {
           popupRef.current.remove();
         }
 
+        const escapeHtml = (str: string) =>
+          str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+        const safeCode = escapeHtml(props.station_code);
+        const safeName = escapeHtml(props.station_name);
+        const safeType = escapeHtml(props.type.charAt(0).toUpperCase() + props.type.slice(1));
+
         const popup = new maplibregl.Popup({
           closeButton: false,
           maxWidth: "250px",
@@ -303,10 +310,10 @@ export default function StationLayer() {
           .setLngLat([lng, lat])
           .setHTML(
             `<div class="station-tooltip">
-              <div class="station-code">${props.station_code}</div>
-              <div class="station-name">${props.station_name}</div>
+              <div class="station-code">${safeCode}</div>
+              <div class="station-name">${safeName}</div>
               <div style="margin-top:4px; color:${isLight ? "#64748b" : "#94a3b8"}; font-size:10px;">
-                ${props.type.charAt(0).toUpperCase() + props.type.slice(1)} · ${props.platforms} platforms
+                ${safeType} · ${props.platforms} platforms
               </div>
             </div>`
           )

@@ -19,8 +19,9 @@ async def clean_expired_telemetry():
                     "WHERE id IN ("
                     "  SELECT id FROM train_telemetry_logs "
                     "  WHERE captured_at < NOW() - INTERVAL '48 hours' "
-                    f"  LIMIT {BATCH_SIZE}"
-                    ")"
+                    "  LIMIT $1"
+                    ")",
+                    BATCH_SIZE,
                 )
                 deleted = int(result.split()[-1])
                 total_deleted += deleted

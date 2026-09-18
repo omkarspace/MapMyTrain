@@ -41,14 +41,12 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
     };
   }, []);
 
-  // Focus close button when drawer opens
   useEffect(() => {
     if (train && closeButtonRef.current) {
       closeButtonRef.current.focus();
     }
   }, [train]);
 
-  // Trap focus within drawer
   useEffect(() => {
     if (!train) return;
 
@@ -84,7 +82,6 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
   useEffect(() => {
     if (!train) return;
     
-    // Only show loading if train changed
     if (prevTrainRef.current !== train.train_number) {
       setScheduleLoading(true);
       prevTrainRef.current = train.train_number;
@@ -119,15 +116,7 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
 
   if (!train) return null;
 
-  const statusColor =
-    position && position.delay > 0
-      ? "text-amber-500 dark:text-amber-400"
-      : "text-emerald-500 dark:text-emerald-400";
-
-  const statusText =
-    position && position.delay > 0
-      ? `${position.delay} min delayed`
-      : "On time";
+  const isDelayed = position && position.delay > 0;
 
   const typeColor = getTrainTypeColor(train.train_type);
 
@@ -136,27 +125,47 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
       ref={drawerRef}
       role="dialog"
       aria-label="Train details"
-      className="absolute bottom-0 left-0 right-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 rounded-t-2xl shadow-2xl max-h-[70vh] overflow-hidden flex flex-col animate-slide-up-enter"
+      className="absolute bottom-0 left-0 right-0 z-20 flex flex-col overflow-hidden max-h-[70vh] animate-slide-up-enter"
+      style={{
+        backgroundColor: "var(--color-surface)",
+        borderTop: "1px solid var(--color-border)",
+        borderRadius: "var(--radius-lg) var(--radius-lg) 0 0",
+        boxShadow: "var(--shadow-xl)",
+        backdropFilter: "blur(16px)",
+      }}
     >
-      <div className="w-12 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-3" />
-      <div className="p-4 overflow-y-auto flex-1">
+      <div
+        className="mx-auto mt-2.5 mb-1 rounded-full"
+        style={{
+          width: "36px",
+          height: "4px",
+          backgroundColor: "var(--color-border)",
+        }}
+      />
+      <div className="px-5 pt-2 pb-4 overflow-y-auto flex-1">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <Train className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+            <div
+              className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+              style={{
+                backgroundColor: "var(--color-accent-subtle)",
+                color: "var(--color-accent)",
+              }}
+            >
+              <Train className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              <h3 className="text-base font-semibold" style={{ color: "var(--color-text-primary)" }}>
                 {train.train_name}
               </h3>
-              <div className="flex items-center gap-2">
-                <p className="text-sm text-slate-500 dark:text-slate-400 font-mono">
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-xs font-mono" style={{ color: "var(--color-text-tertiary)" }}>
                   {train.train_number}
                 </p>
                 {train.train_type && (
                   <span
-                    className="text-xs px-2 py-0.5 rounded-full font-medium"
-                    style={{ backgroundColor: typeColor + "22", color: typeColor }}
+                    className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                    style={{ backgroundColor: typeColor + "1a", color: typeColor }}
                   >
                     {train.train_type}
                   </span>
@@ -167,65 +176,82 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
           <button
             ref={closeButtonRef}
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="p-1.5 rounded-md transition-colors duration-150 outline-none"
+            style={{ color: "var(--color-text-tertiary)" }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--color-surface-alt)"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+            onFocus={(e) => e.currentTarget.style.boxShadow = "0 0 0 2px var(--color-accent-subtle)"}
+            onBlur={(e) => e.currentTarget.style.boxShadow = "none"}
             aria-label="Close train details"
           >
-            <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex items-center gap-2 mb-4">
-          <span className={`flex items-center gap-1 text-sm font-medium ${statusColor}`}>
-            {position && position.delay > 0 ? (
-              <AlertTriangle className="w-4 h-4" />
+        <div className="flex items-center gap-3 mb-4">
+          <span
+            className="flex items-center gap-1.5 text-xs font-medium"
+            style={{ color: isDelayed ? "var(--color-warning)" : "var(--color-success)" }}
+          >
+            {isDelayed ? (
+              <AlertTriangle className="w-3.5 h-3.5" />
             ) : (
-              <Clock className="w-4 h-4" />
+              <Clock className="w-3.5 h-3.5" />
             )}
-            {statusText}
+            {isDelayed ? `${position.delay} min delayed` : "On time"}
           </span>
           {train.distance_km && (
-            <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">
+            <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
               {train.distance_km} km
             </span>
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Source</p>
-            <p className="text-sm font-medium text-slate-900 dark:text-slate-100 flex items-center gap-1">
-              <MapPin className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div
+            className="rounded-lg p-3"
+            style={{ backgroundColor: "var(--color-bg)" }}
+          >
+            <p className="text-xs mb-1" style={{ color: "var(--color-text-tertiary)" }}>Source</p>
+            <p className="text-sm font-medium flex items-center gap-1.5" style={{ color: "var(--color-text-primary)" }}>
+              <MapPin className="w-3.5 h-3.5" style={{ color: "var(--color-success)" }} />
               {train.source_station_code}
             </p>
           </div>
-          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Destination</p>
-            <p className="text-sm font-medium text-slate-900 dark:text-slate-100 flex items-center gap-1">
-              <MapPin className="w-3 h-3 text-rose-500 dark:text-rose-400" />
+          <div
+            className="rounded-lg p-3"
+            style={{ backgroundColor: "var(--color-bg)" }}
+          >
+            <p className="text-xs mb-1" style={{ color: "var(--color-text-tertiary)" }}>Destination</p>
+            <p className="text-sm font-medium flex items-center gap-1.5" style={{ color: "var(--color-text-primary)" }}>
+              <MapPin className="w-3.5 h-3.5" style={{ color: "var(--color-error)" }} />
               {train.destination_station_code}
             </p>
           </div>
         </div>
 
         {position && (
-          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 mb-4">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Current Position</p>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+          <div
+            className="rounded-lg p-3 mb-4"
+            style={{ backgroundColor: "var(--color-bg)" }}
+          >
+            <p className="text-xs mb-2" style={{ color: "var(--color-text-tertiary)" }}>Current Position</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               <div>
-                <span className="text-slate-500 dark:text-slate-400">Lat: </span>
-                <span className="text-slate-900 dark:text-slate-100 font-mono">
+                <span style={{ color: "var(--color-text-tertiary)" }}>Lat: </span>
+                <span className="font-mono text-xs" style={{ color: "var(--color-text-primary)" }}>
                   {position.latitude.toFixed(4)}
                 </span>
               </div>
               <div>
-                <span className="text-slate-500 dark:text-slate-400">Lng: </span>
-                <span className="text-slate-900 dark:text-slate-100 font-mono">
+                <span style={{ color: "var(--color-text-tertiary)" }}>Lng: </span>
+                <span className="font-mono text-xs" style={{ color: "var(--color-text-primary)" }}>
                   {position.longitude.toFixed(4)}
                 </span>
               </div>
               <div>
-                <span className="text-slate-500 dark:text-slate-400">Bearing: </span>
-                <span className="text-slate-900 dark:text-slate-100 font-mono">
+                <span style={{ color: "var(--color-text-tertiary)" }}>Bearing: </span>
+                <span className="font-mono text-xs" style={{ color: "var(--color-text-primary)" }}>
                   {position.bearing}°
                 </span>
               </div>
@@ -234,9 +260,20 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
         )}
 
         <div className="mb-4">
-          <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Timetable</h4>
-          <div className="bg-slate-50 dark:bg-slate-800/30 rounded-lg overflow-hidden">
-            <div className="grid grid-cols-4 gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800/50 text-xs text-slate-500 dark:text-slate-400 font-medium">
+          <h4 className="text-xs font-medium mb-2" style={{ color: "var(--color-text-secondary)" }}>
+            Timetable
+          </h4>
+          <div
+            className="rounded-lg overflow-hidden"
+            style={{ backgroundColor: "var(--color-bg)" }}
+          >
+            <div
+              className="grid grid-cols-4 gap-2 px-3 py-2 text-xs font-medium"
+              style={{
+                color: "var(--color-text-tertiary)",
+                borderBottom: "1px solid var(--color-border)",
+              }}
+            >
               <span>Station</span>
               <span>Arr</span>
               <span>Dep</span>
@@ -248,29 +285,39 @@ export function TrainDrawer({ train, position, onClose }: TrainDrawerProps) {
                 schedule.map((stop) => (
                   <div
                     key={`${stop.station_code}-${stop.stop_sequence}`}
-                    className="grid grid-cols-4 gap-2 px-3 py-2 text-xs border-t border-slate-200 dark:border-slate-700/50"
+                    className="grid grid-cols-4 gap-2 px-3 py-2 text-xs"
+                    style={{
+                      borderBottom: "1px solid var(--color-border)",
+                      color: "var(--color-text-primary)",
+                    }}
                   >
                     <div>
-                      <span className="text-slate-900 dark:text-slate-100">{stop.station_code}</span>
-                      <span className="text-slate-400 dark:text-slate-500 ml-1 hidden sm:inline">
+                      <span>{stop.station_code}</span>
+                      <span className="ml-1 hidden sm:inline" style={{ color: "var(--color-text-tertiary)" }}>
                         {stop.station_name}
                       </span>
                     </div>
-                    <span className="text-slate-700 dark:text-slate-300">{stop.arrival || "--"}</span>
-                    <span className="text-slate-700 dark:text-slate-300">{stop.departure || "--"}</span>
-                    <span className="text-slate-500 dark:text-slate-400">D{stop.day}</span>
+                    <span style={{ color: "var(--color-text-secondary)" }}>{stop.arrival || "--"}</span>
+                    <span style={{ color: "var(--color-text-secondary)" }}>{stop.departure || "--"}</span>
+                    <span style={{ color: "var(--color-text-tertiary)" }}>D{stop.day}</span>
                   </div>
                 ))
               ) : (
-                <div className="px-3 py-4 text-xs text-slate-400 dark:text-slate-500 text-center">
+                <div className="px-3 py-4 text-xs text-center" style={{ color: "var(--color-text-tertiary)" }}>
                   No schedule data
                 </div>
               )}
           </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/50 rounded-lg p-3 text-center">
-          <p className="text-xs text-slate-400 dark:text-slate-500">
+        <div
+          className="rounded-lg p-3 text-center"
+          style={{
+            backgroundColor: "var(--color-bg)",
+            border: "1px solid var(--color-border)",
+          }}
+        >
+          <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
             © OpenStreetMap contributors • ODbL License
           </p>
         </div>

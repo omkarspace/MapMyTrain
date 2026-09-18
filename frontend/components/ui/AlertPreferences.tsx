@@ -26,28 +26,43 @@ export function AlertPreferences({ trainNumber, onClose }: AlertPreferencesProps
   });
 
   const handleSave = () => {
-    // TODO: save to user preferences API
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl animate-fade-scale-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center animate-fade-in"
+      style={{ backgroundColor: "oklch(0 0 0 / 0.4)" }}
+    >
+      <div
+        className="w-full max-w-md mx-4 animate-fade-scale-in rounded-xl p-6"
+        style={{
+          backgroundColor: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          boxShadow: "var(--shadow-xl)",
+        }}
+      >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <Bell className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{
+                backgroundColor: "var(--color-accent-subtle)",
+                color: "var(--color-accent)",
+              }}
+            >
+              <Bell className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Alert Preferences</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Train {trainNumber}</p>
+              <h3 className="text-base font-semibold" style={{ color: "var(--color-text-primary)" }}>Alert Preferences</h3>
+              <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>Train {trainNumber}</p>
             </div>
           </div>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="text-sm text-slate-700 dark:text-slate-300 mb-2 block">
+            <label className="text-sm mb-2 block" style={{ color: "var(--color-text-secondary)" }}>
               Delay Alert Threshold (minutes)
             </label>
             <input
@@ -59,19 +74,23 @@ export function AlertPreferences({ trainNumber, onClose }: AlertPreferencesProps
                 setConfig({ ...config, delayThreshold: parseInt(e.target.value) })
               }
               className="w-full"
+              style={{ accentColor: "var(--color-accent)" }}
             />
-            <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500 mt-1">
+            <div className="flex justify-between text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
               <span>5 min</span>
-              <span className="text-slate-700 dark:text-slate-300">{config.delayThreshold} min</span>
+              <span style={{ color: "var(--color-text-secondary)" }}>{config.delayThreshold} min</span>
               <span>60 min</span>
             </div>
           </div>
 
           <div className="space-y-3">
-            <label className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg cursor-pointer">
+            <label
+              className="flex items-center justify-between p-3 rounded-lg cursor-pointer"
+              style={{ backgroundColor: "var(--color-bg)" }}
+            >
               <div className="flex items-center gap-3">
-                <Bell className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-                <span className="text-sm text-slate-700 dark:text-slate-300">Next Station Alert</span>
+                <Bell className="w-4 h-4" style={{ color: "var(--color-warning)" }} />
+                <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Next Station Alert</span>
               </div>
               <input
                 type="checkbox"
@@ -79,14 +98,18 @@ export function AlertPreferences({ trainNumber, onClose }: AlertPreferencesProps
                 onChange={(e) =>
                   setConfig({ ...config, nextStationAlert: e.target.checked })
                 }
-                className="w-4 h-4 rounded bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-blue-500 focus:ring-blue-500"
+                className="w-4 h-4 rounded"
+                style={{ accentColor: "var(--color-accent)" }}
               />
             </label>
 
-            <label className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg cursor-pointer">
+            <label
+              className="flex items-center justify-between p-3 rounded-lg cursor-pointer"
+              style={{ backgroundColor: "var(--color-bg)" }}
+            >
               <div className="flex items-center gap-3">
-                <Bell className="w-4 h-4 text-green-500 dark:text-green-400" />
-                <span className="text-sm text-slate-700 dark:text-slate-300">Final Arrival Alert</span>
+                <Bell className="w-4 h-4" style={{ color: "var(--color-success)" }} />
+                <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Final Arrival Alert</span>
               </div>
               <input
                 type="checkbox"
@@ -94,39 +117,38 @@ export function AlertPreferences({ trainNumber, onClose }: AlertPreferencesProps
                 onChange={(e) =>
                   setConfig({ ...config, arrivalAlert: e.target.checked })
                 }
-                className="w-4 h-4 rounded bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-blue-500 focus:ring-blue-500"
+                className="w-4 h-4 rounded"
+                style={{ accentColor: "var(--color-accent)" }}
               />
             </label>
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Notification Channels</p>
+          <div className="pt-4" style={{ borderTop: "1px solid var(--color-border)" }}>
+            <p className="text-xs mb-3" style={{ color: "var(--color-text-tertiary)" }}>Notification Channels</p>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() =>
-                  setConfig({ ...config, pushEnabled: !config.pushEnabled })
-                }
-                className={`flex items-center justify-center gap-2 p-3 rounded-lg border transition-colors ${
-                  config.pushEnabled
-                    ? "bg-blue-500/20 border-blue-500 text-blue-500 dark:text-blue-400"
-                    : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400"
-                }`}
+                onClick={() => setConfig({ ...config, pushEnabled: !config.pushEnabled })}
+                className="flex items-center justify-center gap-2 p-3 rounded-lg border transition-colors text-sm"
+                style={{
+                  backgroundColor: config.pushEnabled ? "var(--color-accent-subtle)" : "var(--color-bg)",
+                  borderColor: config.pushEnabled ? "var(--color-accent)" : "var(--color-border)",
+                  color: config.pushEnabled ? "var(--color-accent)" : "var(--color-text-tertiary)",
+                }}
               >
                 <Smartphone className="w-4 h-4" />
-                <span className="text-sm">Push</span>
+                <span>Push</span>
               </button>
               <button
-                onClick={() =>
-                  setConfig({ ...config, whatsappEnabled: !config.whatsappEnabled })
-                }
-                className={`flex items-center justify-center gap-2 p-3 rounded-lg border transition-colors ${
-                  config.whatsappEnabled
-                    ? "bg-green-500/20 border-green-500 text-green-500 dark:text-green-400"
-                    : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400"
-                }`}
+                onClick={() => setConfig({ ...config, whatsappEnabled: !config.whatsappEnabled })}
+                className="flex items-center justify-center gap-2 p-3 rounded-lg border transition-colors text-sm"
+                style={{
+                  backgroundColor: config.whatsappEnabled ? "color-mix(in srgb, var(--color-success) 15%, transparent)" : "var(--color-bg)",
+                  borderColor: config.whatsappEnabled ? "var(--color-success)" : "var(--color-border)",
+                  color: config.whatsappEnabled ? "var(--color-success)" : "var(--color-text-tertiary)",
+                }}
               >
                 <MessageSquare className="w-4 h-4" />
-                <span className="text-sm">WhatsApp</span>
+                <span>WhatsApp</span>
               </button>
             </div>
           </div>
@@ -135,13 +157,22 @@ export function AlertPreferences({ trainNumber, onClose }: AlertPreferencesProps
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 py-2 px-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm"
+            className="flex-1 py-2 px-4 rounded-lg transition-colors text-sm"
+            style={{
+              backgroundColor: "var(--color-bg)",
+              color: "var(--color-text-secondary)",
+              border: "1px solid var(--color-border)",
+            }}
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+            className="flex-1 py-2 px-4 rounded-lg transition-colors text-sm"
+            style={{
+              backgroundColor: "var(--color-accent)",
+              color: "#fff",
+            }}
           >
             Save Preferences
           </button>

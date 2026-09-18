@@ -126,18 +126,19 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
   };
 
   return (
-    <div className="absolute top-4 left-4 right-4 z-20 max-w-lg animate-slide-down-enter">
+    <div className="absolute top-4 left-4 right-4 z-20 max-w-lg mx-auto sm:mx-4">
       <div className="relative">
-        <div className="flex gap-2 mb-2" role="tablist" aria-label="Search mode">
+        <div className="flex gap-1.5 mb-2" role="tablist" aria-label="Search mode">
           <button
             onClick={() => setSearchMode("train")}
             role="tab"
             aria-selected={searchMode === "train"}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              searchMode === "train"
-                ? "bg-blue-500 text-white"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
-            }`}
+            className="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150"
+            style={{
+              backgroundColor: searchMode === "train" ? "var(--color-accent)" : "var(--color-surface)",
+              color: searchMode === "train" ? "#fff" : "var(--color-text-secondary)",
+              border: searchMode === "train" ? "none" : "1px solid var(--color-border)",
+            }}
           >
             By Train
           </button>
@@ -145,11 +146,12 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
             onClick={() => setSearchMode("route")}
             role="tab"
             aria-selected={searchMode === "route"}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              searchMode === "route"
-                ? "bg-blue-500 text-white"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
-            }`}
+            className="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150"
+            style={{
+              backgroundColor: searchMode === "route" ? "var(--color-accent)" : "var(--color-surface)",
+              color: searchMode === "route" ? "#fff" : "var(--color-text-secondary)",
+              border: searchMode === "route" ? "none" : "1px solid var(--color-border)",
+            }}
           >
             By Route
           </button>
@@ -168,27 +170,34 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
                     setSourceStation(val);
                     setSourceError(val && !validateStationCode(val) ? "2-5 characters" : "");
                   }}
-                  onBlur={() => {
+                  onBlur={(e) => {
                     if (sourceStation && !validateStationCode(sourceStation)) {
                       setSourceError("2-5 characters required");
                     }
+                    if (!sourceError) e.target.style.borderColor = "var(--color-border)";
                   }}
-                  className={`w-full px-3 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm uppercase ${
-                    sourceError
-                      ? "border-red-500 dark:border-red-500"
-                      : "border-slate-300 dark:border-slate-700"
-                  }`}
                   maxLength={5}
                   aria-invalid={!!sourceError}
                   aria-describedby={sourceError ? "source-error" : undefined}
+                  className="w-full px-3 py-2 rounded-md text-sm uppercase transition-all duration-150 outline-none"
+                  style={{
+                    backgroundColor: "var(--color-surface)",
+                    border: sourceError ? "1px solid var(--color-error)" : "1px solid var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                  onFocus={(e) => {
+                    if (!sourceError) e.target.style.borderColor = "var(--color-accent)";
+                  }}
                 />
                 {sourceError && (
-                  <p id="source-error" className="text-xs text-red-500 mt-1">
+                  <p id="source-error" className="text-xs mt-1" style={{ color: "var(--color-error)" }}>
                     {sourceError}
                   </p>
                 )}
               </div>
-              <ArrowRight className="w-5 h-5 text-slate-400 self-center" />
+              <div className="flex items-center self-center" style={{ color: "var(--color-text-tertiary)" }}>
+                <ArrowRight className="w-4 h-4" />
+              </div>
               <div className="flex-1">
                 <input
                   type="text"
@@ -199,22 +208,27 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
                     setDestStation(val);
                     setDestError(val && !validateStationCode(val) ? "2-5 characters" : "");
                   }}
-                  onBlur={() => {
+                  onBlur={(e) => {
                     if (destStation && !validateStationCode(destStation)) {
                       setDestError("2-5 characters required");
                     }
+                    if (!destError) e.target.style.borderColor = "var(--color-border)";
                   }}
-                  className={`w-full px-3 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm uppercase ${
-                    destError
-                      ? "border-red-500 dark:border-red-500"
-                      : "border-slate-300 dark:border-slate-700"
-                  }`}
                   maxLength={5}
                   aria-invalid={!!destError}
                   aria-describedby={destError ? "dest-error" : undefined}
+                  className="w-full px-3 py-2 rounded-md text-sm uppercase transition-all duration-150 outline-none"
+                  style={{
+                    backgroundColor: "var(--color-surface)",
+                    border: destError ? "1px solid var(--color-error)" : "1px solid var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                  onFocus={(e) => {
+                    if (!destError) e.target.style.borderColor = "var(--color-accent)";
+                  }}
                 />
                 {destError && (
-                  <p id="dest-error" className="text-xs text-red-500 mt-1">
+                  <p id="dest-error" className="text-xs mt-1" style={{ color: "var(--color-error)" }}>
                     {destError}
                   </p>
                 )}
@@ -223,18 +237,23 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-2 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="px-2 py-2 rounded-md text-sm transition-all duration-150 outline-none"
+                style={{
+                  backgroundColor: "var(--color-surface)",
+                  border: "1px solid var(--color-border)",
+                  color: "var(--color-text-primary)",
+                }}
               />
             </div>
           </div>
         )}
 
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" style={{ color: "var(--color-text-tertiary)" }}>
             {isLoading ? (
-              <div className="h-5 w-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+              <div className="h-4 w-4 border-2 rounded-full animate-spin" style={{ borderColor: "var(--color-border)", borderTopColor: "var(--color-accent)" }} />
             ) : (
-              <Search className="h-5 w-5 text-slate-400" />
+              <Search className="h-4 w-4" />
             )}
           </div>
           <input
@@ -251,7 +270,6 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
               setIsOpen(true);
               setHighlightIndex(-1);
             }}
-            onFocus={() => setIsOpen(true)}
             onKeyDown={handleKeyDown}
             aria-label={
               searchMode === "train"
@@ -259,14 +277,33 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
                 : "Search trains by route"
             }
             aria-autocomplete="list"
-            className="w-full pl-10 pr-4 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full pl-9 pr-4 py-2.5 rounded-md text-sm outline-none transition-all duration-150"
+            style={{
+              backgroundColor: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+              color: "var(--color-text-primary)",
+            }}
+            onFocus={(e) => {
+              setIsOpen(true);
+              e.target.style.borderColor = "var(--color-accent)";
+              e.target.style.boxShadow = "0 0 0 2px var(--color-accent-subtle)";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = "var(--color-border)";
+              e.target.style.boxShadow = "none";
+            }}
           />
           {isOpen && (isLoading || suggestions.length > 0 || query.length > 0) && (
             <div
               ref={dropdownRef}
               role="listbox"
               aria-label="Search results"
-              className="absolute top-full mt-1 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-xl max-h-80 overflow-y-auto animate-fade-scale-in"
+              className="absolute top-full mt-1.5 w-full rounded-lg overflow-hidden max-h-80 overflow-y-auto"
+              style={{
+                backgroundColor: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                boxShadow: "var(--shadow-lg)",
+              }}
             >
               {isLoading ? (
                 <div className="p-2 space-y-2">
@@ -275,12 +312,12 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
                   ))}
                 </div>
               ) : suggestions.length === 0 ? (
-                <div className="p-4 text-center">
-                  <Search className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                <div className="p-5 text-center">
+                  <Search className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--color-text-tertiary)" }} />
+                  <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
                     No trains found for &ldquo;{query}&rdquo;
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                  <p className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
                     Try searching by train number or name
                   </p>
                 </div>
@@ -290,26 +327,39 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
                   role="option"
                   aria-selected={index === highlightIndex}
                   onClick={() => handleSelect(train)}
-                  className={`w-full px-4 py-3 text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
-                    index === highlightIndex ? "bg-slate-100 dark:bg-slate-800" : ""
-                  }`}
+                  className="w-full px-4 py-2.5 text-left transition-colors duration-75"
+                  style={{
+                    backgroundColor: index === highlightIndex ? "var(--color-accent-subtle)" : "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (index !== highlightIndex) e.currentTarget.style.backgroundColor = "var(--color-surface-alt)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (index !== highlightIndex) e.currentTarget.style.backgroundColor = "transparent";
+                  }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <span className="text-blue-500 dark:text-blue-400 text-xs font-mono font-bold">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                      style={{
+                        backgroundColor: "var(--color-accent-subtle)",
+                        color: "var(--color-accent)",
+                      }}
+                    >
+                      <span className="text-xs font-semibold font-mono">
                         {train.train_number.slice(0, 3)}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                        <p className="text-sm font-medium truncate" style={{ color: "var(--color-text-primary)" }}>
                           {train.train_name}
                         </p>
                         {train.train_type && (
                           <span
                             className="text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0"
                             style={{
-                              backgroundColor: getTrainTypeColor(train.train_type) + "22",
+                              backgroundColor: getTrainTypeColor(train.train_type) + "1a",
                               color: getTrainTypeColor(train.train_type),
                             }}
                           >
@@ -317,15 +367,15 @@ export function SearchBar({ onTrainSelect, trains }: SearchBarProps) {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
                         {train.train_number} • {train.source_station_code} →{" "}
                         {train.destination_station_code}
                         {train.distance_km ? ` • ${train.distance_km} km` : ""}
                       </p>
                     </div>
-                    <div className="text-xs text-slate-400 dark:text-slate-500">
+                    <div className="text-xs shrink-0">
                       {train.average_delay != null && train.average_delay > 0 && (
-                        <span className="text-amber-500 dark:text-amber-400">
+                        <span style={{ color: "var(--color-warning)" }}>
                           +{train.average_delay}m
                         </span>
                       )}

@@ -130,7 +130,8 @@ export default function MapCanvas() {
       mapRef.current = null;
       setMap(null);
     };
-  }, [setMap, theme]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setMap]);
 
   useEffect(() => {
     if (mapRef.current) {

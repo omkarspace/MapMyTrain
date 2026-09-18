@@ -1,7 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-
 interface LoadingButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
   loadingText?: string;
@@ -20,26 +18,38 @@ export function LoadingButton({
   ...props
 }: LoadingButtonProps) {
   const baseStyles =
-    "inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center font-medium rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
 
-  const variantStyles = {
-    primary:
-      "bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-500 dark:bg-blue-600 dark:hover:bg-blue-700",
-    secondary:
-      "bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
-    ghost:
-      "bg-transparent text-slate-700 hover:bg-slate-100 focus:ring-slate-500 dark:text-slate-300 dark:hover:bg-slate-800",
+  const variantStyles: Record<string, React.CSSProperties> = {
+    primary: {
+      backgroundColor: "var(--color-accent)",
+      color: "#fff",
+    },
+    secondary: {
+      backgroundColor: "var(--color-surface)",
+      color: "var(--color-text-secondary)",
+      border: "1px solid var(--color-border)",
+    },
+    ghost: {
+      backgroundColor: "transparent",
+      color: "var(--color-text-secondary)",
+    },
   };
 
-  const sizeStyles = {
+  const sizeStyles: Record<string, string> = {
     sm: "px-3 py-1.5 text-xs gap-1.5",
     md: "px-4 py-2 text-sm gap-2",
     lg: "px-6 py-3 text-base gap-2",
   };
 
+  const combinedClassName = [baseStyles, sizeStyles[size], className]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <button
-      className={cn(baseStyles, variantStyles[variant], sizeStyles[size], className)}
+      className={combinedClassName}
+      style={variantStyles[variant]}
       disabled={disabled || isLoading}
       {...props}
     >

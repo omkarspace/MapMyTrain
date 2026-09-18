@@ -3,17 +3,20 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.config import settings
 from app.database import db_manager
 from app.routers import trains, stations
 from app.routers.routes import router as routes_router
 from app.routers.schedules import router as schedules_router
 from app.routers.ws import router as ws_router
+from app.routers.viewport import router as viewport_router
 from app.services.broadcaster import broadcaster
 from app.services.cache import cache_service
-from app.services.redis_client import close_redis_client
+from app.services.redis_client import close_redis_client, get_redis_client
 from app.ingestion.worker import run_ingestion_loop
 from app.services.cleanup import run_cleanup_loop
+from app.middleware.rate_limit import RateLimitMiddleware
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("MapMyTrain")
@@ -71,13 +74,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(RateLimitMiddleware)
+
 app.include_router(trains.router, prefix=settings.API_V1_STR)
 app.include_router(stations.router, prefix=settings.API_V1_STR)
 app.include_router(routes_router, prefix=settings.API_V1_STR)
 app.include_router(schedules_router, prefix=settings.API_V1_STR)
 app.include_router(ws_router, prefix=settings.API_V1_STR)
+app.include_router(viewport_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "version": settings.VERSION}
+    checks = {"status": "healthy", "version": settings.VERSION, "checks": {}}
+
+    try:
+        async with db_manager.get_connection() as conn:
+            await conn.fetchval("SELECT 1")
+        checks["checks"]["database"] = "ok"
+    except Exception as e:
+        checks["status"] = "degraded"
+        checks["checks"]["database"] = f"error: {type(e).__name__}"
+
+    try:
+        client = await get_redis_client()
+        await client.ping()
+        checks["checks"]["redis"] = "ok"
+    except Exception as e:
+        checks["status"] = "degraded"
+        checks["checks"]["redis"] = f"error: {type(e).__name__}"
+
+    status_code = 200 if checks["status"] == "healthy" else 503
+    return JSONResponse(content=checks, status_code=status_code)

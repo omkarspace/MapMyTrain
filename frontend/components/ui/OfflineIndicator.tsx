@@ -22,7 +22,6 @@ export function OfflineIndicator({ isWebSocketConnected = true, onRetry }: Offli
       setIsOnline(false);
     };
 
-    // Delay setting state to avoid synchronous updates in effect body
     const timer = setTimeout(() => {
       setIsOnline(navigator.onLine);
       setLastSync(new Date());
@@ -49,9 +48,16 @@ export function OfflineIndicator({ isWebSocketConnected = true, onRetry }: Offli
   if (status === "connected") {
     return (
       <div className="absolute top-4 right-4 z-20 animate-fade-in">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 backdrop-blur-sm border border-emerald-500/30 rounded-full transition-colors duration-300">
-          <Wifi className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
-          <span className="text-[10px] text-emerald-500 dark:text-emerald-400 font-medium">Live</span>
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors duration-300"
+          style={{
+            backgroundColor: "color-mix(in srgb, var(--color-success) 15%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--color-success) 25%, transparent)",
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          <Wifi className="w-3 h-3" style={{ color: "var(--color-success)" }} />
+          <span className="text-[10px] font-medium" style={{ color: "var(--color-success)" }}>Live</span>
         </div>
       </div>
     );
@@ -60,9 +66,16 @@ export function OfflineIndicator({ isWebSocketConnected = true, onRetry }: Offli
   if (status === "connecting") {
     return (
       <div className="absolute top-4 right-4 z-20 animate-fade-in">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 backdrop-blur-sm border border-amber-500/30 rounded-full transition-colors duration-300">
-          <Loader2 className="w-3 h-3 text-amber-500 dark:text-amber-400 animate-spin" />
-          <span className="text-[10px] text-amber-500 dark:text-amber-400 font-medium">Connecting...</span>
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors duration-300"
+          style={{
+            backgroundColor: "color-mix(in srgb, var(--color-warning) 15%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--color-warning) 25%, transparent)",
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          <Loader2 className="w-3 h-3 animate-spin" style={{ color: "var(--color-warning)" }} />
+          <span className="text-[10px] font-medium" style={{ color: "var(--color-warning)" }}>Connecting...</span>
         </div>
       </div>
     );
@@ -70,86 +83,34 @@ export function OfflineIndicator({ isWebSocketConnected = true, onRetry }: Offli
 
   return (
     <div className="absolute top-4 right-4 z-20 animate-fade-in">
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 backdrop-blur-sm border border-red-500/30 rounded-full transition-colors duration-300">
-        <WifiOff className="w-3 h-3 text-red-500 dark:text-red-400" />
-        <span className="text-[10px] text-red-500 dark:text-red-400 font-medium">Offline</span>
+      <div
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors duration-300"
+        style={{
+          backgroundColor: "color-mix(in srgb, var(--color-error) 15%, transparent)",
+          border: "1px solid color-mix(in srgb, var(--color-error) 25%, transparent)",
+          backdropFilter: "blur(8px)",
+        }}
+      >
+        <WifiOff className="w-3 h-3" style={{ color: "var(--color-error)" }} />
+        <span className="text-[10px] font-medium" style={{ color: "var(--color-error)" }}>Offline</span>
         {onRetry && (
           <button
             onClick={onRetry}
-            className="ml-1 p-0.5 hover:bg-red-500/20 rounded transition-colors"
+            className="ml-1 p-0.5 rounded transition-colors"
+            style={{ color: "var(--color-error)" }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--color-error) 20%, transparent)"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
             aria-label="Reconnect"
           >
-            <RefreshCw className="w-3 h-3 text-red-500 dark:text-red-400" />
+            <RefreshCw className="w-3 h-3" />
           </button>
         )}
       </div>
       {lastSync && (
-        <p className="text-[8px] text-slate-400 dark:text-slate-500 mt-1 text-right">
+        <p className="text-[8px] mt-1 text-right" style={{ color: "var(--color-text-tertiary)" }}>
           Last sync: {lastSync.toLocaleTimeString()}
         </p>
       )}
     </div>
   );
 }
-
-export class OfflineCache {
-  private dbName = "mapmytrain-offline";
-  private storeName = "train-data";
-
-  async openDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, 1);
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains(this.storeName)) {
-          db.createObjectStore(this.storeName, { keyPath: "trainId" });
-        }
-      };
-    });
-  }
-
-  async cacheTrainData(trainId: number, data: unknown): Promise<void> {
-    const db = await this.openDB();
-    const tx = db.transaction(this.storeName, "readwrite");
-    const store = tx.objectStore(this.storeName);
-    store.put({ trainId, data, timestamp: Date.now() });
-  }
-
-  async getCachedTrainData(trainId: number): Promise<unknown | null> {
-    const db = await this.openDB();
-    const tx = db.transaction(this.storeName, "readonly");
-    const store = tx.objectStore(this.storeName);
-    return new Promise((resolve, reject) => {
-      const request = store.get(trainId);
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result?.data || null);
-    });
-  }
-
-  async clearExpiredCache(maxAgeMs: number = 3600000): Promise<void> {
-    const db = await this.openDB();
-    const tx = db.transaction(this.storeName, "readwrite");
-    const store = tx.objectStore(this.storeName);
-    const cutoff = Date.now() - maxAgeMs;
-
-    return new Promise((resolve, reject) => {
-      const request = store.openCursor();
-      request.onerror = () => reject(request.error);
-      request.onsuccess = (event) => {
-        const cursor = (event.target as IDBRequest).result;
-        if (cursor) {
-          if (cursor.value.timestamp < cutoff) {
-            cursor.delete();
-          }
-          cursor.continue();
-        } else {
-          resolve();
-        }
-      };
-    });
-  }
-}
-
-export const offlineCache = new OfflineCache();

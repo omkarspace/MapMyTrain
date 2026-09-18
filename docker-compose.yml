@@ -66,7 +66,12 @@ services:
     command: -c /data/config.json --public_url http://localhost:8080
     networks:
       - mapmytrain-mesh
-    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
 
   backend:
     build:

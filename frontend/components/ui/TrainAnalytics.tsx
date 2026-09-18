@@ -19,23 +19,20 @@ const calculateVelocity = (prev: VelocityData[]): number => {
   if (prev.length < 2) return 0;
   
   const recent = prev.slice(-2);
-  const timeDiff = (recent[1].timestamp - recent[0].timestamp) / 1000; // seconds
+  const timeDiff = (recent[1].timestamp - recent[0].timestamp) / 1000;
   
   if (timeDiff <= 0) return 0;
   
-  // Basic velocity estimate based on delay changes
-  // In production, use actual GPS coordinates with Haversine formula
   const delayDiff = Math.abs(recent[1].delay - recent[0].delay);
-  const estimatedSpeed = Math.round(80 + (delayDiff * 2)); // Rough estimate
+  const estimatedSpeed = Math.round(80 + (delayDiff * 2));
   
-  return Math.min(Math.max(estimatedSpeed, 0), 200); // Clamp between 0-200 km/h
+  return Math.min(Math.max(estimatedSpeed, 0), 200);
 };
 
 export function TrainAnalytics({ trainId, currentPosition }: TrainAnalyticsProps) {
   const [history, setHistory] = useState<VelocityData[]>([]);
   const prevTrainIdRef = useRef<number | null>(null);
 
-  // Reset history if train changes
   useEffect(() => {
     if (prevTrainIdRef.current !== trainId) {
       prevTrainIdRef.current = trainId;
@@ -43,7 +40,6 @@ export function TrainAnalytics({ trainId, currentPosition }: TrainAnalyticsProps
     }
   }, [trainId]);
 
-  // Update history in effect with setTimeout to avoid synchronous setState inside effect
   useEffect(() => {
     if (!currentPosition) return;
 
@@ -79,43 +75,62 @@ export function TrainAnalytics({ trainId, currentPosition }: TrainAnalyticsProps
   const trend = getTrend();
 
   return (
-    <div className="bg-slate-100 dark:bg-slate-800/50 rounded-lg p-3 mb-4 font-sans">
-      <h4 className="text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">Live Analytics</h4>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white dark:bg-slate-900/50 rounded-lg p-2">
+    <div
+      className="rounded-lg p-3 mb-4"
+      style={{ backgroundColor: "var(--color-bg)" }}
+    >
+      <h4 className="text-xs font-medium mb-2" style={{ color: "var(--color-text-tertiary)" }}>
+        Live Analytics
+      </h4>
+      <div className="grid grid-cols-2 gap-2">
+        <div
+          className="rounded-lg p-2"
+          style={{ backgroundColor: "var(--color-surface)" }}
+        >
           <div className="flex items-center gap-1 mb-1">
-            <Gauge className="w-3 h-3 text-blue-500 dark:text-blue-400" />
-            <span className="text-[10px] text-slate-500 dark:text-slate-400">Velocity</span>
+            <Gauge className="w-3 h-3" style={{ color: "var(--color-accent)" }} />
+            <span className="text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>Velocity</span>
           </div>
-          <p className="text-sm font-mono text-slate-900 dark:text-slate-100">{currentVelocity} km/h</p>
+          <p className="text-sm font-mono" style={{ color: "var(--color-text-primary)" }}>
+            {currentVelocity} km/h
+          </p>
         </div>
-        <div className="bg-white dark:bg-slate-900/50 rounded-lg p-2">
+        <div
+          className="rounded-lg p-2"
+          style={{ backgroundColor: "var(--color-surface)" }}
+        >
           <div className="flex items-center gap-1 mb-1">
-            <Clock className="w-3 h-3 text-amber-500 dark:text-amber-400" />
-            <span className="text-[10px] text-slate-500 dark:text-slate-400">Delay Trend</span>
+            <Clock className="w-3 h-3" style={{ color: "var(--color-warning)" }} />
+            <span className="text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>Delay Trend</span>
           </div>
           <div className="flex items-center gap-1">
-            <p className="text-sm font-mono text-slate-900 dark:text-slate-100">
+            <p className="text-sm font-mono" style={{ color: "var(--color-text-primary)" }}>
               {currentPosition?.delay || 0}m
             </p>
-            {trend === "up" && <TrendingUp className="w-3 h-3 text-red-500 dark:text-red-400" />}
-            {trend === "down" && <TrendingDown className="w-3 h-3 text-green-500 dark:text-green-400" />}
-            {trend === "stable" && <Minus className="w-3 h-3 text-slate-400" />}
+            {trend === "up" && <TrendingUp className="w-3 h-3" style={{ color: "var(--color-error)" }} />}
+            {trend === "down" && <TrendingDown className="w-3 h-3" style={{ color: "var(--color-success)" }} />}
+            {trend === "stable" && <Minus className="w-3 h-3" style={{ color: "var(--color-text-tertiary)" }} />}
           </div>
         </div>
       </div>
 
       {history.length > 1 && (
-        <div className="mt-2 bg-white dark:bg-slate-900/50 rounded-lg p-2">
-          <span className="text-[10px] text-slate-500 dark:text-slate-400">Delay History (last {history.length} updates)</span>
+        <div
+          className="mt-2 rounded-lg p-2"
+          style={{ backgroundColor: "var(--color-surface)" }}
+        >
+          <span className="text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>
+            Delay History (last {history.length} updates)
+          </span>
           <div className="flex items-end gap-0.5 h-8 mt-1">
             {history.slice(-10).map((h, i) => (
               <div
                 key={i}
-                className="flex-1 bg-slate-300 dark:bg-slate-700 rounded-t transition-all duration-300 ease-out"
+                className="flex-1 rounded-t transition-all duration-300 ease-out"
                 style={{
                   height: `${Math.min(100, (h.delay / 60) * 100)}%`,
                   minHeight: "2px",
+                  backgroundColor: "var(--color-accent-subtle)",
                 }}
               />
             ))}

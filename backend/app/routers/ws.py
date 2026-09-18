@@ -1,9 +1,8 @@
 import asyncio
-import json
 import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.services.broadcaster import broadcaster
-from app.schemas.websocket import TrainPosition, encode_train_position
+from app.schemas.websocket import TRAIN_POSITION_SIZE
 
 logger = logging.getLogger("MapMyTrain.WS")
 
@@ -55,7 +54,10 @@ _heartbeat_task: asyncio.Task | None = None
 
 @router.websocket("/stream")
 async def websocket_stream(websocket: WebSocket):
-    """WebSocket endpoint for real-time train positions."""
+    """WebSocket endpoint for real-time train positions.
+
+    Relays binary frames directly from Redis Pub/Sub to clients.
+    """
     global _heartbeat_task
     await manager.connect(websocket)
 
@@ -64,19 +66,8 @@ async def websocket_stream(websocket: WebSocket):
 
     try:
         async for message in broadcaster.subscribe():
-            try:
-                data = json.loads(message)
-                pos = TrainPosition(
-                    train_id=int(data.get("train_number", 0)),
-                    longitude=float(data.get("longitude", 0)),
-                    latitude=float(data.get("latitude", 0)),
-                    bearing=int(data.get("bearing", 0)),
-                    delay=int(data.get("delay", 0)),
-                )
-                encoded = encode_train_position(pos)
-                await manager.broadcast(encoded)
-            except Exception as e:
-                logger.error(f"Error processing message: {e}")
+            if isinstance(message, (bytes, bytearray)) and len(message) == TRAIN_POSITION_SIZE:
+                await manager.broadcast(message)
     except WebSocketDisconnect:
         pass
     finally:
