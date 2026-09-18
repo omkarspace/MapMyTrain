@@ -3,7 +3,8 @@ node_modules/
 __pycache__/
 *.pyc
 .env
-.env.local
+.env.*
+!.env.example
 /.superpowers/
 
 # Internal planning docs (not for public)
